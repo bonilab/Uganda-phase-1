@@ -13,8 +13,9 @@ minima = 0.4;
 raw = readmatrix('../data/uga_rainfall.csv');
 raw = raw(:, 1:2);
 
-% Shift the data to account for the Anopheles gambiae life cycle of about 10 - 11 days
-daily = circshift(raw(:, 2), 10);
+% Shift the data to account for the Anopheles gambiae life cycle of about
+% 10 - 11 days, skewing a bit longer for Uganda
+daily = circshift(raw(:, 2), 11);
 
 % Smooth the and normalize the data
 daily = smoothdata(daily);
