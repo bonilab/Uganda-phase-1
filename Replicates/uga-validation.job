@@ -1,0 +1,9 @@
+#!/bin/bash
+
+#PBS -A mfb9_b_g_sc_default
+#PBS -l pmem=32gb
+#PBS -l nodes=1:ppn=1:rhel7:stmem
+#PBS -l walltime=96:00:00
+
+cd $PBS_O_WORKDIR
+./MaSim -i uga-validation.yml -s 2 -r DbReporterDistrict
