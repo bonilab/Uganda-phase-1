@@ -1,0 +1,14 @@
+#!/bin/bash
+
+#SBATCH --nodes=1
+#SBATCH --ntasks=8
+#SBATCH --mem=32GB
+#SBATCH --time=8:00:00
+#SBATCH --partition=sla-prio
+#SBATCH --account=mfb9
+
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=rbz5100@psu.edu
+
+cd $SLURM_SUBMIT_DIR
+./MaSim -i uga-movement.yml -s 3 -r DbReporterDistrict --mc --v=1

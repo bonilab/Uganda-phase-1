@@ -38,8 +38,8 @@ starting_date: 2009/1/1
 # 2020 is the target calibration date based upon DHS MIS surveys
 start_of_comparison_period: 2020/1/1
 
-# Take the target date plus an overrun of five years for validation
-ending_date: 2025/1/1
+# Since we are recording movement, we only need one day
+ending_date: 2009/2/1
 
 # Discard the first five years worth of data
 start_collect_data_day: 1826
@@ -59,7 +59,7 @@ age_structure: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 15, 20, 60, 100]
 initial_age_structure: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 25, 35, 45, 55, 65, 100]
 
 # Scaling of the population in the model
-artificial_rescaling_of_population_size: 0.15
+artificial_rescaling_of_population_size: 1.0
 
 # ---------------------------------------------------------------
 # Rasters to be used in conjunction with the location_db, note 
@@ -79,6 +79,9 @@ raster_db:
   # Raster file containing the calibrated beta value
   beta_raster: "uga_beta.asc"
   
+  # Raster file containing the travel time / friction surface
+  travel_raster: "uga_travel.asc"
+
   # Set the cell size used by raster, in sq.km
   cell_size: 5
 
@@ -104,8 +107,8 @@ seasonal_info:
 # Country specific movement model and calibration  
 # TODO Generic movement model that needs to be updated for Uganda at some point
 spatial_model:
-  name: "Wesolowski"
-  Wesolowski:
+  name: "WesolowskiSurface"
+  WesolowskiSurface:
     kappa: 0.01093251
     alpha: 0.22268982
     beta: 0.14319618
