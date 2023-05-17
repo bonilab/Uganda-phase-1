@@ -2,12 +2,7 @@
 #
 # Boni Lab
 #
-# Reference UGANDA model configuration data
-#
-# WARNING This configuration is not intended to be run by the 
-# simulation, but to be used as an aggregate of reference data
-# for the various configuration parameter. The configuration in
-# PfPR Decline/uga-pfpr-constant.yml is the canonical baseline.
+# Configuration to validate the UGANDA model.
 # ---------------------------------------------------------------
 
 # ---------------------------------------------------------------
