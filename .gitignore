@@ -1,2 +1,10 @@
+# Exclude IDE files
+.vscode
+
+# Ignore symlinks
+GIS/reference/uga_district.asc
+GIS/reference/uga_population.asc
+
+# Exclude working directories
 **/data/**
 **/out/**
