@@ -38,7 +38,7 @@ starting_date: 2009/1/1
 # 2020 is the target calibration date based upon DHS MIS surveys
 start_of_comparison_period: 2020/1/1
 
-# Since we are recording movement, we only need one day
+# Since we are recording movement, we only need one month of data
 ending_date: 2009/2/1
 
 # Discard the first five years worth of data
