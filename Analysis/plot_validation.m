@@ -8,18 +8,15 @@
 % Optional paramters:
 % age - 59 (0 - 59 months) or 120 (2 - 10 years)
 
-function [] = plot_validation(type, modelData, referenceData, varargin)
+function [] = plot_validation(modelData, unreported, varargin)
+    REFERENCE = 'data/uga-weighted_pfpr_district.csv';
+
     subplot(1, 2, 1);
-    y_maxima = plot_comparison(modelData, referenceData, varargin{:});
-    
+    y_maxima = plot_comparison(modelData, REFERENCE, varargin{:});
+
+    % Plot the case data
     subplot(1, 2, 2);
-    if strcmp(type, 'cases')
-        plot_cases_pfpr(modelData, y_maxima, varargin{:});   
-    elseif strcmp(type, 'incidence')
-        plot_pfpr_incidence(modelData);
-    else
-        error('Unknown plot type: %s', type);        
-    end
+    plot_cases_pfpr(modelData, unreported, y_maxima, varargin{:});   
     
     % Append the country name if supplied
     inputExist = find(cellfun(@(x) strcmpi(x, 'country') , varargin));
@@ -31,13 +28,16 @@ end
 function [y_maxima] = plot_comparison(modelData, referenceData, varargin)
     CENTER_MIN = 0;
 
+    % Data seperator
+    fprintf("--- District Prevelence ---\n");
+
     % Parse the arguments
     [pfprIndex, ageBand] = parseAge(varargin{:});
 
     % Load the data
     reference = readmatrix(referenceData);
     [data, districts] = load(modelData, 11 * 365, 16 * 365);
-        
+
     % Since the MAP values are the mean, we want to compare against the
     % mean of our data, but highlight the seasonal minima and maxima
     x_maxima = 0; y_maxima = 0;
@@ -70,11 +70,14 @@ function [y_maxima] = plot_comparison(modelData, referenceData, varargin)
         if max(mean(pfpr)) > x_maxima
             x_maxima = ceil(max(mean(pfpr)) / 5) * 5.5;
         end
+
+        % Report the distirct metrics
+        fprintf('%d: Expected: %.2f; Simulation: %.2f\n', district, expected, mean(pfpr));
     end
     hold off;
     
     % Set the limits
-     xlim([CENTER_MIN x_maxima]);
+    xlim([CENTER_MIN x_maxima]);
     ylim([CENTER_MIN y_maxima]);
     
     % Plot the reference error lines
@@ -94,14 +97,17 @@ function [y_maxima] = plot_comparison(modelData, referenceData, varargin)
     format();
 end
 
-function [] = plot_cases_pfpr(modelData, y_maxima, varargin)
+function [] = plot_cases_pfpr(modelData, unreported, y_maxima, varargin)
     CSV_POPULATION = 3; CSV_CASES = 4; CSV_REPORTED = 5; 
     
+    % Data seperator
+    fprintf("\n--- District Cases ---\n");
+
     % Set the treatment rate if supplied
-    treated = 1.0;
+    treatment_rate = 1.0;
     inputExist = find(cellfun(@(x) strcmpi(x, 'treated'), varargin));
     if inputExist
-        treated = varargin{inputExist + 1};
+        treatment_rate = varargin{inputExist + 1};
     end
     [pfprIndex, ageBand] = parseAge(varargin{:});
 
@@ -110,6 +116,7 @@ function [] = plot_cases_pfpr(modelData, y_maxima, varargin)
     
     % Prepare the arrays
     cases = zeros(size(districts, 1), 1);
+    treated = zeros(size(districts, 1), 1);
     reported = zeros(size(districts, 1), 1);
     pfpr = zeros(size(districts, 1), 1);
     
@@ -118,31 +125,42 @@ function [] = plot_cases_pfpr(modelData, y_maxima, varargin)
     population = 0;
     for district = transpose(districts)
         filtered = data(data(:, 2) == district, :);
-        cases(ndx) = log10(sum(filtered(:, CSV_CASES)) / (max(filtered(:, CSV_POPULATION)) / 1000));
-        reported(ndx) = log10((sum(filtered(:, CSV_REPORTED)) * treated) / (max(filtered(:, CSV_POPULATION)) / 1000));
+        cases(ndx) = sum(filtered(:, CSV_CASES)) / (max(filtered(:, CSV_POPULATION)) / 1000);
+        treated(ndx) = (sum(filtered(:, CSV_REPORTED)) * treatment_rate) / (max(filtered(:, CSV_POPULATION)) / 1000);
+        reported(ndx) = treated(ndx) * (1 - unreported);
+
         pfpr(ndx) = mean(filtered(:, pfprIndex));
 
-        fprintf('%d: Cases: %.2f; Reported: %.2f\n', ndx,  10 .^ cases(ndx), 10 .^ reported(ndx));
+        fprintf('%d: Cases: %.2f; Treated: %.2f; Reported: %.2f\n', ndx, cases(ndx), treated(ndx), reported(ndx))
         population = population + max(filtered(:, CSV_POPULATION));
 
         ndx = ndx + 1;
     end
 
+    % Switch the plotting data to log10
+    cases = log10(cases);
+    treated = log10(treated);
+    reported = log10(reported);
+
     % NOTE These are absolute values from the simuation data, if population
     % scaling is applied they may need to be adjusted to approximate real
     % projections
     fprintf('Total Simulation Clinical Cases: %.2f\n', sum(data(:, CSV_CASES)));
-    fprintf('Total Simulation Cases Reported: %.2f\n', sum(data(:, CSV_REPORTED)));
+    fprintf('Total Simulation Cases Treated: %.2f\n', sum(data(:, CSV_REPORTED)));
+    fprintf('Total Simulation Cases Reported: %.2f\n', (sum(data(:, CSV_REPORTED))) * (1 - unreported));
 
     fprintf('Total Incidence: %.2f / 1000\n', sum(data(:, CSV_CASES)) / (population / 1000));
-    fprintf('Total Cases: %.2f / 1000\n', sum(data(:, CSV_REPORTED)) / (population / 1000));
+    fprintf('Total Cases: %.2f - %.2f / 1000\n', ...
+        sum(data(:, CSV_REPORTED) * (1 - unreported)) / (population / 1000), ...
+        sum(data(:, CSV_REPORTED)) / (population / 1000));
 
     hold on;
-    scatter(cases, pfpr, 125, 'black', 'filled', 'MarkerEdgeColor', 'black', 'MarkerFaceAlpha', 0.5);
-    scatter(reported, pfpr, 125, [99 99 99] / 127.5, 'filled', 'MarkerEdgeColor', 'black', 'MarkerFaceAlpha', 0.5);    
+    scatter(cases, pfpr, 125, [0.6350 0.0780 0.1840], 'filled', 'MarkerEdgeColor', 'black', 'MarkerFaceAlpha', 0.75);
+    scatter(treated, pfpr, 125, [0.9290 0.6940 0.1250], 'filled', 'MarkerEdgeColor', 'black', 'MarkerFaceAlpha', 0.5);    
+    scatter(reported, pfpr, 125, [0.4660 0.6740 0.1880], 'filled', 'MarkerEdgeColor', 'black', 'MarkerFaceAlpha', 0.5);    
     
     % Fix the legend
-	legend({'Total Clinical Cases', 'Reported Clinical Cases'}, 'Location', 'NorthWest', 'AutoUpdate', 'off');
+	legend({'Total Cases', 'Treated Cases', 'Reported Cases'}, 'Location', 'NorthWest', 'AutoUpdate', 'off');
 
     % Add the incidence rate and CrI if supplied
     inputExist = find(cellfun(@(x) strcmpi(x, 'ci'), varargin));
@@ -156,7 +174,6 @@ function [] = plot_cases_pfpr(modelData, y_maxima, varargin)
     hold off;
     
     % Determine the bounds
-%    y_maxima = ceil(max(pfpr) / 5) * 5;
     x_maxima = max(cases);
     x_maxima = floor(x_maxima) + ceil((x_maxima - floor(x_maxima)) / 0.25) * 0.25;
     x_minima = min(reported);
@@ -172,26 +189,6 @@ function [] = plot_cases_pfpr(modelData, y_maxima, varargin)
     xlabel('Clinical Cases per 1,000');
     ylabel(sprintf('Simulated {\\itPf}PR_{%s}', ageBand));
     legend boxoff;
-    format();
-end
-
-function [] = plot_pfpr_incidence(modelData)
-    % Load the data
-    [data, districts] = load(modelData, 14 * 365, 15 * 365);
-    
-    % Add the points
-    hold on;
-    for district = transpose(districts)
-        filtered = data(data(:, 2) == district, :);
-        incidence = sum(filtered(:, 4)) / max(filtered(:, 3));
-        pfpr = mean(filtered(:, 7));
-        scatter(pfpr, incidence, 'black', 'filled')
-    end
-    hold off;
-    
-    % Label and format the plot
-    ylabel('Population Incidence (PYO^{-1})');
-    xlabel('Simulated Prevalence ({\itPf}PR_{2 to 10})');
     format();
 end
 

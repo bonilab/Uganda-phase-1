@@ -1,5 +1,6 @@
 # Exclude IDE files
 .vscode
+*.asv
 
 # Ignore symlinks
 GIS/reference/uga_district.asc
