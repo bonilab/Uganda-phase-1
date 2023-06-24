@@ -1,0 +1,14 @@
+#!/bin/bash
+
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --mem=4gb
+#SBATCH --time=96:00:00
+#SBATCH --partition=sla-prio
+#SBATCH --account=mfb9
+
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=rbz5100@psu.edu
+
+cd $SLURM_SUBMIT_DIR
+./spike.sh
