@@ -29,7 +29,7 @@ function [y_maxima] = plot_comparison(modelData, referenceData, varargin)
     CENTER_MIN = 0;
 
     % Data seperator
-    fprintf("--- District Prevelence ---\n");
+    fprintf("--- District Prevalence ---\n");
 
     % Parse the arguments
     [pfprIndex, ageBand] = parseAge(varargin{:});
@@ -182,8 +182,8 @@ function [] = plot_cases_pfpr(modelData, unreported, y_maxima, varargin)
     % Format the log10 axis
     ylim([0 y_maxima]);
     xlim([x_minima x_maxima]);
-    xticks(log10([0 10 25 50 100 200:200:1000 1500 2000]));
-    xticklabels(split(num2str([0 10 25 50 100 200:200:1000 1500 2000])));
+    xticks(log10([0 10 25 50 100 200 400 600 1000 1500 2000]));
+    xticklabels(split(num2str([0 10 25 50 100 200 400 600 1000 1500 2000])));
     
     % Label and format the plot
     xlabel('Clinical Cases per 1,000');
