@@ -4,6 +4,10 @@
 #
 # Load the relevant spike studies from the database.
 import csv
+import datetime
+import matplotlib
+import matplotlib.pyplot as plt
+import pandas as pd
 import os
 import sys
 
@@ -15,7 +19,8 @@ from utility import progressBar
 # Connection string for the database
 CONNECTION = 'host=masimdb.vmhost.psu.edu dbname=uganda user=sim password=sim connect_timeout=60'
 
-# Path for the resulting data
+# Paths for the resulting data
+PLOTS_DIRECTORY = 'plots'
 SPIKING_DIRECTORY = 'data/spiking'
 
 # Path for the replicates data
@@ -86,7 +91,7 @@ def get_replicate(replicateId):
 
 
 # Process the replicates to make sure we have all of the data we need locally
-def process_replicates():
+def load():
   def save_csv(filename, data):
     with open(filename, 'w') as csvfile:
       writer = csv.writer(csvfile)
@@ -118,5 +123,79 @@ def process_replicates():
   if count != len(replicates): progressBar(len(replicates), len(replicates))
 
 
+def plot(replicate, title, labels):
+  DATES, DISTRICT, INFECTED, WEIGHTED = 2, 3, 4, 8
+  START_DATE = datetime.datetime(2009, 1, 1)
+  
+  # Load the data
+  data = pd.read_csv('data/spiking/{}.csv'.format(replicate), header = None)
+  data['frequency'] = data[WEIGHTED] / data[INFECTED]
+  districts = data[DISTRICT].unique().tolist()
+  dates = data[DATES].unique().tolist()
+  dates = [START_DATE + datetime.timedelta(days=x) for x in dates]  
+  
+  # Skip the plot if there is nothing to plot
+  if max(data.frequency) == 0: return
+  
+  # Determine our limits
+  ylim = [0, max(data.frequency)]
+  xlim = [min(dates), max(dates)]
+    
+  # Setup to generate the plot
+  matplotlib.rc_file('../Scripts/matplotlibrc-line')
+  figure, axes = plt.subplots(3, 5)
+  figure.suptitle(title, y = 0.94)
+  
+  # Generate a 15 panel plot 
+  row, col = 0, 0
+  for district in districts:
+    axes[row, col].plot(dates, data[data[DISTRICT] == district].frequency)
+    axes[row, col].title.set_text(labels[labels.ID == district].Label.values[0])
+    
+    if row != 2:    
+      plt.setp(axes[row, col].get_xticklabels(), visible = False)
+    if col != 0:
+      plt.setp(axes[row, col].get_yticklabels(), visible = False)
+    axes[row, col].set_xlim(xlim)
+    axes[row, col].set_ylim(ylim)      
+      
+    col += 1
+    if col % 5 == 0:
+      row += 1
+      col = 0
+  
+  # Apply any final formatting
+  plt.setp(axes[2, 0].get_xticklabels()[0], visible = False) 
+  plt.sca(axes[1, 0])      
+  plt.ylabel('469Y Frequency')
+  plt.sca(axes[2, 2])
+  plt.xlabel('Model Year')
+
+  # Save the plot
+  plt.savefig('plots/{}.png'.format(title))
+  plt.close()
+  
+      
+def process():
+  REPLICATE, STUDYID, FILENAME = 3, 1, 2
+
+  # Set up the environment, load relevent data  
+  if not os.path.exists(PLOTS_DIRECTORY): os.makedirs(PLOTS_DIRECTORY)  
+  data = pd.read_csv('data/uga-replicates.csv', header = None)
+  labels = pd.read_csv('../GIS/uga_mis_mapping.csv')
+  
+  for index, row in data.iterrows():
+    try:
+      if row[STUDYID] != 4: continue
+      parts = row[FILENAME].split('-')
+      title = '{} - {} - {}'.format(parts[2].capitalize(), parts[3], parts[4].replace('.yml', ''))
+      plot(row[REPLICATE], title, labels)
+      progressBar(index, len(data))
+    except Exception as ex:
+      print('\nError plotting replicate {}, configuration {}'.format(row[REPLICATE], row[FILENAME]))
+      print(ex)
+      
+
 if __name__ == '__main__':
-  process_replicates()
+  load()
+  process()

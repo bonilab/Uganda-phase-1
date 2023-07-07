@@ -8,4 +8,5 @@ GIS/reference/uga_population.asc
 
 # Exclude working directories
 **/data/**
+**/plots/**
 **/out/**
