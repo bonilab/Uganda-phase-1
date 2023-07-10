@@ -6,6 +6,7 @@
 import csv
 import datetime
 import matplotlib
+import matplotlib.dates
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
@@ -18,6 +19,11 @@ from utility import progressBar
 
 # Connection string for the database
 CONNECTION = 'host=masimdb.vmhost.psu.edu dbname=uganda user=sim password=sim connect_timeout=60'
+
+# Paths for reference data
+DISTRICTS_MAPPING = '../GIS/administrative/uga_districts.csv'
+MIS_MAPPING = '../GIS/administrative/uga_mis_mapping.csv'
+MUTATIONS_469Y = '../GIS/mutations/uga_469y_mutations.csv'
 
 # Paths for the resulting data
 PLOTS_DIRECTORY = 'plots'
@@ -123,22 +129,35 @@ def load():
   if count != len(replicates): progressBar(len(replicates), len(replicates))
 
 
-def plot(replicate, title, labels):
+def plot(replicate, title, labels, mutations):
+  def label(region):
+    # Filter mutations to the current region, exit if there are none
+    filtered = mutations[(mutations.MisRegion == region) & (mutations.Frequency != 0)]
+    if len(filtered) == 0: return
+    
+    # Add a labeled point for each year and frequency combination
+    plt.sca(axes[row, col])
+    for index, data_row in filtered.iterrows():
+      x = datetime.datetime(data_row.Year, 9, 30)
+      y = data_row.Frequency
+      plt.scatter(x, y, color = 'black', s = 50)
+      plt.annotate('{} ({:.3f})'.format(data_row.District, y), (x, y), textcoords = 'offset points', xytext=(0,10), ha='center', fontsize=18)
+
   DATES, DISTRICT, INFECTED, WEIGHTED = 2, 3, 4, 8
   START_DATE = datetime.datetime(2009, 1, 1)
   
-  # Load the data
+  # Load the spiking data, skip plotting if there is nothing to plot
   data = pd.read_csv('data/spiking/{}.csv'.format(replicate), header = None)
   data['frequency'] = data[WEIGHTED] / data[INFECTED]
+  if max(data.frequency) == 0: return
+  
+  # Finish setting up our data for plotting
   districts = data[DISTRICT].unique().tolist()
   dates = data[DATES].unique().tolist()
   dates = [START_DATE + datetime.timedelta(days=x) for x in dates]  
-  
-  # Skip the plot if there is nothing to plot
-  if max(data.frequency) == 0: return
-  
+
   # Determine our limits
-  ylim = [0, max(data.frequency)]
+  ylim = [0, max(max(data.frequency), max(mutations.Frequency))]
   xlim = [min(dates), max(dates)]
     
   # Setup to generate the plot
@@ -150,12 +169,15 @@ def plot(replicate, title, labels):
   row, col = 0, 0
   for district in districts:
     axes[row, col].plot(dates, data[data[DISTRICT] == district].frequency)
+    label(labels[labels.ID == district].Label.values[0])
     axes[row, col].title.set_text(labels[labels.ID == district].Label.values[0])
     
     if row != 2:    
       plt.setp(axes[row, col].get_xticklabels(), visible = False)
     if col != 0:
       plt.setp(axes[row, col].get_yticklabels(), visible = False)
+
+    axes[row, col].xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%y'))
     axes[row, col].set_xlim(xlim)
     axes[row, col].set_ylim(ylim)      
       
@@ -179,21 +201,23 @@ def plot(replicate, title, labels):
 def process():
   REPLICATE, STUDYID, FILENAME = 3, 1, 2
 
-  # Set up the environment, load relevent data  
+  # Set up the environment, load relevant data  
   if not os.path.exists(PLOTS_DIRECTORY): os.makedirs(PLOTS_DIRECTORY)  
   data = pd.read_csv('data/uga-replicates.csv', header = None)
-  labels = pd.read_csv('../GIS/uga_mis_mapping.csv')
+  labels = pd.read_csv(MIS_MAPPING)
+  mutations = pd.read_csv(MUTATIONS_469Y)
   
   for index, row in data.iterrows():
     try:
       if row[STUDYID] != 4: continue
       parts = row[FILENAME].split('-')
       title = '{} - {} - {}'.format(parts[2].capitalize(), parts[3], parts[4].replace('.yml', ''))
-      plot(row[REPLICATE], title, labels)
+      plot(row[REPLICATE], title, labels, mutations)
       progressBar(index, len(data))
     except Exception as ex:
       print('\nError plotting replicate {}, configuration {}'.format(row[REPLICATE], row[FILENAME]))
       print(ex)
+  progressBar(len(data), len(data))
       
 
 if __name__ == '__main__':
