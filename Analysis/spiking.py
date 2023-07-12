@@ -21,6 +21,9 @@ from utility import progressBar
 # Connection string for the database
 CONNECTION = 'host=masimdb.vmhost.psu.edu dbname=uganda user=sim password=sim connect_timeout=60'
 
+# Common start date for all configurations
+START_DATE = datetime.datetime(2009, 1, 1)
+
 # Paths for reference data
 DISTRICTS_MAPPING = '../GIS/administrative/uga_districts.csv'
 MIS_MAPPING = '../GIS/administrative/uga_mis_mapping.csv'
@@ -36,6 +39,8 @@ REPLICATES_LIST = 'data/uga-replicates.csv'
 # This class warps the functions related to plotting calibration studies.
 class calibration:
   def __plot(self, replicate, title, labels, mutations):
+    DATES, DISTRICT, INFECTED, WEIGHTED = 2, 3, 4, 8
+
     def label(region):
       # Filter mutations to the current region, exit if there are none
       filtered = mutations[(mutations.MisRegion == region) & (mutations.Frequency != 0)]
@@ -48,9 +53,6 @@ class calibration:
         y = data_row.Frequency
         plt.scatter(x, y, color = 'black', s = 50)
         plt.annotate('{} ({:.3f})'.format(data_row.District, y), (x, y), textcoords = 'offset points', xytext=(0,10), ha='center', fontsize=18)
-
-    DATES, DISTRICT, INFECTED, WEIGHTED = 2, 3, 4, 8
-    START_DATE = datetime.datetime(2009, 1, 1)
     
     # Load the spiking data, skip plotting if there is nothing to plot
     data = pd.read_csv('data/spiking/{}.csv'.format(replicate), header = None)
@@ -106,9 +108,8 @@ class calibration:
   def process(self):
     REPLICATE, STUDYID, FILENAME = 3, 1, 2
 
-    # Set up the environment, load relevant data  
-    if not os.path.exists(PLOTS_DIRECTORY): os.makedirs(PLOTS_DIRECTORY)  
-    data = pd.read_csv('data/uga-replicates.csv', header = None)
+    # Load relevant data    
+    data = pd.read_csv(REPLICATES_LIST, header = None)
     labels = pd.read_csv(MIS_MAPPING)
     mutations = pd.read_csv(MUTATIONS_469Y)
     
@@ -171,7 +172,7 @@ class loader:
           FROM sim.monthlydata md
             INNER JOIN sim.monthlysitedata msd on msd.monthlydataid = md.id
           WHERE md.replicateid = %(replicateId)s
-            AND md.dayselapsed > (11 * 365)
+            AND md.dayselapsed > (7 * 365)
           GROUP BY md.replicateid, md.dayselapsed, msd.location) sd
         LEFT JOIN (
           SELECT md.replicateid, md.dayselapsed, mgd.location AS district,
@@ -182,7 +183,7 @@ class loader:
             INNER JOIN sim.monthlygenomedata mgd on mgd.monthlydataid = md.id
             INNER JOIN sim.genotype g on g.id = mgd.genomeid
           WHERE md.replicateid = %(replicateId)s
-            AND md.dayselapsed > (11 * 365)
+            AND md.dayselapsed > (7 * 365)
             AND g.name ~ '^.....Y.'
           GROUP BY md.replicateid, md.dayselapsed, mgd.location) gd ON (gd.replicateid = sd.replicateid 
             AND gd.dayselapsed = sd.dayselapsed
@@ -227,7 +228,108 @@ class loader:
     if count != len(replicates): progressBar(len(replicates), len(replicates))
 
 
+def __plot(replicates, mutations, labels):
+  DATES, DISTRICT, INFECTED, WEIGHTED = 2, 3, 4, 8
+
+  # Setup to generate the plot
+  matplotlib.rc_file('../Scripts/matplotlibrc-line')
+  figure, axes = plt.subplots(3, 5)
+  # figure.suptitle(title, y = 0.94)
+  
+  # Set a single order for the districts
+  districts = mutations.District.unique()
+
+  # Start by preparing the replicate data that we need to plot
+  ymax = 0
+  for replicate in replicates:
+    # Load the data and prepare the dates
+    data = pd.read_csv('data/spiking/{}.csv'.format(replicate), header = None)
+    data['frequency'] = data[WEIGHTED] / data[INFECTED]
+    ymax = max(ymax, max(data.frequency))
+    dates = data[DATES].unique().tolist()
+    dates = [START_DATE + datetime.timedelta(days=x) for x in dates]
+
+    # Generate a 15 panel plot while looping over the districts that we have 
+    # spiking data for
+    row, col = 0, 0
+    for district in districts:
+      district_id = labels[labels.Label == district].ID.values[0]
+      axes[row, col].plot(dates, data[data[DISTRICT] == district_id].frequency)
+      axes[row, col].title.set_text(district)
+      col += 1
+      if col % 5 == 0:
+        row += 1 
+        col = 0
+        
+  # Next, add the know data points to the plots
+  row, col = 0, 0
+  for district in districts:
+    plt.sca(axes[row, col])
+    for index, data_row in mutations[mutations.District == district].iterrows():
+      x = datetime.datetime(data_row.Year, 9, 30)
+      y = data_row.Frequency
+      plt.scatter(x, y, color = 'black', s = 100, zorder = 99)
+    
+    col += 1
+    if col % 5 == 0:
+      row += 1
+      col = 0
+        
+  # Format the x, y axis and ticks
+  for row in range(3):
+    for col in range(5):
+      axes[row, col].set_ylim([0, ymax])
+      axes[row, col].set_xlim([min(dates), max(dates)])
+      axes[row, col].xaxis.set_major_formatter(matplotlib.dates.DateFormatter("'%y"))
+      if row != 2 and not (row == 1 and col == 4):
+        plt.setp(axes[row, col].get_xticklabels(), visible = False)
+      if col != 0:
+        plt.setp(axes[row, col].get_yticklabels(), visible = False)
+        
+  # Apply the final figure formatting
+  axes[2, 4].set_visible(False)
+  plt.setp(axes[2, 0].get_xticklabels()[0], visible = False)
+  plt.sca(axes[1, 0])
+  plt.ylabel('469Y Frequency')
+  plt.sca(axes[2, 2])
+  plt.xlabel('Model Year')
+
+
+def process():
+  CONFIGURATION, REPLICATE, FILENAME = 0, 3, 2
+
+  # Load relevant data
+  data = pd.read_csv(REPLICATES_LIST, header = None)
+  labels = pd.read_csv(DISTRICTS_MAPPING)
+  mutations = pd.read_csv(MUTATIONS_469Y)
+
+  configurations = []
+  progressBar(0, len(data))
+  for index, row in data.iterrows():
+    try:
+      # Skip if this is not a district calibration
+      if len(data[data[FILENAME] == row[FILENAME]]) == 1: continue
+      
+      # Skip if we have already seen this configuration
+      if row[CONFIGURATION] in configurations: continue
+
+      # Get the list of replicates associated with this configuration, note that
+      # we are assuming that using the configuration id is more reliable to distinguish
+      # between configurations than their filename
+      replicates = data[data[CONFIGURATION] == row[CONFIGURATION]][REPLICATE]
+      __plot(replicates, mutations, labels)
+      configurations.append(row[CONFIGURATION])
+      progressBar(index, len(data))
+    except Exception as ex:
+        print('\nError plotting replicate {}, configuration {}'.format(row[REPLICATE], row[FILENAME]))
+        print(ex)
+  progressBar(len(data), len(data))    
+
+
 def main(args):
+  # Perform any common setup
+  if not os.path.exists(PLOTS_DIRECTORY): os.makedirs(PLOTS_DIRECTORY)
+
   # Everything goes through the same loader
   loader().load()
 
@@ -235,14 +337,10 @@ def main(args):
   if args.type == 'c':
     calibration().process()
   elif args.type == 'd':
-    process_district()
+    process()
   else:
     print('Unknown type parameter, {}'.format(args.type))
      
-
-def process_district():
-  pass
-
 
 if __name__ == '__main__':
   # Parse the parameters and defer to the main function

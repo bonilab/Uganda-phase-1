@@ -227,7 +227,7 @@ events:
   - name: introduce_mutant_raster_event
     info:
       - day: 2010/4/1
-        raster: uga_gulu.asc
+        raster: uga_agago.asc
         fraction: 0.075
         locus: 2
         mutant_allele: 1
