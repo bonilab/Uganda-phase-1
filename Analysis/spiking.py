@@ -3,6 +3,7 @@
 # spiking.py
 #
 # Load the relevant spike studies from the database.
+import argparse
 import csv
 import datetime
 import matplotlib
@@ -129,7 +130,20 @@ def load():
   if count != len(replicates): progressBar(len(replicates), len(replicates))
 
 
-def plot(replicate, title, labels, mutations):
+def main(args):
+  # Everything goes through the same load function
+  load()
+
+  # Hand things off to the correct processing
+  if args.type == 'c':
+    process_calibration()
+  elif args.type == 'd':
+    process_district()
+  else:
+    print('Unknown type parameter, {}'.format(args.type))
+
+
+def plot_calibration(replicate, title, labels, mutations):
   def label(region):
     # Filter mutations to the current region, exit if there are none
     filtered = mutations[(mutations.MisRegion == region) & (mutations.Frequency != 0)]
@@ -198,7 +212,7 @@ def plot(replicate, title, labels, mutations):
   plt.close()
   
       
-def process():
+def process_calibration():
   REPLICATE, STUDYID, FILENAME = 3, 1, 2
 
   # Set up the environment, load relevant data  
@@ -207,12 +221,19 @@ def process():
   labels = pd.read_csv(MIS_MAPPING)
   mutations = pd.read_csv(MUTATIONS_469Y)
   
+  progressBar(0, len(data))
   for index, row in data.iterrows():
     try:
+      # Check to see if this is a calibration configuration
       if row[STUDYID] != 4: continue
+      if len(data[data[FILENAME] == row[FILENAME]]) > 1: continue
+      
+      # Parse out the title components of a calibration filename
       parts = row[FILENAME].split('-')
       title = '{} - {} - {}'.format(parts[2].capitalize(), parts[3], parts[4].replace('.yml', ''))
-      plot(row[REPLICATE], title, labels, mutations)
+
+      # Generate the plot and update the progress bar
+      plot_calibration(row[REPLICATE], title, labels, mutations)
       progressBar(index, len(data))
     except Exception as ex:
       print('\nError plotting replicate {}, configuration {}'.format(row[REPLICATE], row[FILENAME]))
@@ -220,6 +241,13 @@ def process():
   progressBar(len(data), len(data))
       
 
+def process_district():
+  pass
+
+
 if __name__ == '__main__':
-  load()
-  process()
+  # Parse the parameters and defer to the main function
+  parser = argparse.ArgumentParser()
+  parser.add_argument('-t', action='store', dest='type', required=True,
+    help='The type of plots to generate, c for calibration or d for district')
+  main(parser.parse_args())
