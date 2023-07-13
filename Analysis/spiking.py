@@ -132,6 +132,116 @@ class calibration:
         print(ex)
     progressBar(len(data), len(data))    
 
+
+# This class wraps the functions related to plotting district spike studies
+class district:
+  mutations = None
+  labels = None
+  
+  def __plot(self, replicates, title, filename):
+    DATES, DISTRICT, INFECTED, WEIGHTED = 2, 3, 4, 8
+  
+    # Setup to generate the plot
+    matplotlib.rc_file('../Scripts/matplotlibrc-line')
+    figure, axes = plt.subplots(3, 5)
+    figure.suptitle(title, y = 0.94)
+    
+    # Set a single order for the districts
+    districts = self.mutations.District.unique()
+  
+    # Start by preparing the replicate data that we need to plot
+    ymax = 0
+    for replicate in replicates:
+      # Load the data and prepare the dates
+      data = pd.read_csv('data/spiking/{}.csv'.format(replicate), header = None)
+      data['frequency'] = data[WEIGHTED] / data[INFECTED]
+      ymax = max(ymax, max(data.frequency))
+      dates = data[DATES].unique().tolist()
+      dates = [START_DATE + datetime.timedelta(days=x) for x in dates]
+  
+      # Generate a 15 panel plot while looping over the districts that we have 
+      # spiking data for
+      row, col = 0, 0
+      for district in districts:
+        district_id = self.labels[self.labels.Label == district].ID.values[0]
+        axes[row, col].plot(dates, data[data[DISTRICT] == district_id].frequency)
+        axes[row, col].title.set_text(district)
+        
+        col += 1
+        if col % 5 == 0:
+          row += 1 
+          col = 0
+          
+    # Next, add the know data points to the plots
+    row, col = 0, 0
+    for district in districts:
+      plt.sca(axes[row, col])
+      for index, data_row in self.mutations[self.mutations.District == district].iterrows():
+        x = datetime.datetime(data_row.Year, 9, 30)
+        y = data_row.Frequency
+        plt.scatter(x, y, color = 'black', s = 100, zorder = 99)
+        
+      col += 1
+      if col % 5 == 0:
+        row += 1
+        col = 0
+          
+    # Format the x, y axis and ticks
+    for row in range(3):
+      for col in range(5):
+        axes[row, col].set_ylim([0, ymax])
+        axes[row, col].set_xlim([min(dates), max(dates)])
+        axes[row, col].xaxis.set_major_formatter(matplotlib.dates.DateFormatter("'%y"))
+        if row != 2 and not (row == 1 and col == 4):
+          plt.setp(axes[row, col].get_xticklabels(), visible = False)
+        if col != 0:
+          plt.setp(axes[row, col].get_yticklabels(), visible = False)
+          
+    # Apply the final figure formatting
+    axes[2, 4].set_visible(False)
+    plt.setp(axes[2, 0].get_xticklabels()[0], visible = False)
+    plt.sca(axes[1, 0])
+    plt.ylabel('469Y Frequency')
+    plt.sca(axes[2, 2])
+    plt.xlabel('Model Year')
+    
+    # Save the plot
+    plt.savefig('plots/{}'.format(filename))
+    plt.close()
+  
+  def process(self):
+    CONFIGURATION, REPLICATE, FILENAME = 0, 3, 2
+  
+    # Load relevant data
+    data = pd.read_csv(REPLICATES_LIST, header = None)
+    self.labels = pd.read_csv(DISTRICTS_MAPPING)
+    self.mutations = pd.read_csv(MUTATIONS_469Y)
+  
+    configurations = []
+    progressBar(0, len(data))
+    for index, row in data.iterrows():
+      try:
+        # Skip if this is not a district calibration
+        if len(data[data[FILENAME] == row[FILENAME]]) == 1: continue
+        
+        # Skip if we have already seen this configuration
+        if row[CONFIGURATION] in configurations: continue
+  
+        # Get the list of replicates associated with this configuration, note that
+        # we are assuming that using the configuration id is more reliable to distinguish
+        # between configurations than their filename
+        replicates = data[data[CONFIGURATION] == row[CONFIGURATION]][REPLICATE]
+        self.__plot(replicates, '{} ({}), n = {}'.format(
+          row[FILENAME].replace('.yml', ''), row[CONFIGURATION], len(replicates)),
+          '{}-{}.png'.format(row[FILENAME].replace('.yml', ''), row[CONFIGURATION]))
+        configurations.append(row[CONFIGURATION])
+        progressBar(index, len(data))
+      except Exception as ex:
+          print('\nError plotting replicate {}, configuration {}'.format(row[REPLICATE], row[FILENAME]))
+          print(ex)
+    progressBar(len(data), len(data))    
+  
+
 # This class wraps the functions related to loading replicate data.
 class loader:
   # Get the spiking replicates from the database, note the default study is set.
@@ -227,105 +337,6 @@ class loader:
     # Complete progress bar for replicates
     if count != len(replicates): progressBar(len(replicates), len(replicates))
 
-
-def __plot(replicates, mutations, labels):
-  DATES, DISTRICT, INFECTED, WEIGHTED = 2, 3, 4, 8
-
-  # Setup to generate the plot
-  matplotlib.rc_file('../Scripts/matplotlibrc-line')
-  figure, axes = plt.subplots(3, 5)
-  # figure.suptitle(title, y = 0.94)
-  
-  # Set a single order for the districts
-  districts = mutations.District.unique()
-
-  # Start by preparing the replicate data that we need to plot
-  ymax = 0
-  for replicate in replicates:
-    # Load the data and prepare the dates
-    data = pd.read_csv('data/spiking/{}.csv'.format(replicate), header = None)
-    data['frequency'] = data[WEIGHTED] / data[INFECTED]
-    ymax = max(ymax, max(data.frequency))
-    dates = data[DATES].unique().tolist()
-    dates = [START_DATE + datetime.timedelta(days=x) for x in dates]
-
-    # Generate a 15 panel plot while looping over the districts that we have 
-    # spiking data for
-    row, col = 0, 0
-    for district in districts:
-      district_id = labels[labels.Label == district].ID.values[0]
-      axes[row, col].plot(dates, data[data[DISTRICT] == district_id].frequency)
-      axes[row, col].title.set_text(district)
-      col += 1
-      if col % 5 == 0:
-        row += 1 
-        col = 0
-        
-  # Next, add the know data points to the plots
-  row, col = 0, 0
-  for district in districts:
-    plt.sca(axes[row, col])
-    for index, data_row in mutations[mutations.District == district].iterrows():
-      x = datetime.datetime(data_row.Year, 9, 30)
-      y = data_row.Frequency
-      plt.scatter(x, y, color = 'black', s = 100, zorder = 99)
-    
-    col += 1
-    if col % 5 == 0:
-      row += 1
-      col = 0
-        
-  # Format the x, y axis and ticks
-  for row in range(3):
-    for col in range(5):
-      axes[row, col].set_ylim([0, ymax])
-      axes[row, col].set_xlim([min(dates), max(dates)])
-      axes[row, col].xaxis.set_major_formatter(matplotlib.dates.DateFormatter("'%y"))
-      if row != 2 and not (row == 1 and col == 4):
-        plt.setp(axes[row, col].get_xticklabels(), visible = False)
-      if col != 0:
-        plt.setp(axes[row, col].get_yticklabels(), visible = False)
-        
-  # Apply the final figure formatting
-  axes[2, 4].set_visible(False)
-  plt.setp(axes[2, 0].get_xticklabels()[0], visible = False)
-  plt.sca(axes[1, 0])
-  plt.ylabel('469Y Frequency')
-  plt.sca(axes[2, 2])
-  plt.xlabel('Model Year')
-
-
-def process():
-  CONFIGURATION, REPLICATE, FILENAME = 0, 3, 2
-
-  # Load relevant data
-  data = pd.read_csv(REPLICATES_LIST, header = None)
-  labels = pd.read_csv(DISTRICTS_MAPPING)
-  mutations = pd.read_csv(MUTATIONS_469Y)
-
-  configurations = []
-  progressBar(0, len(data))
-  for index, row in data.iterrows():
-    try:
-      # Skip if this is not a district calibration
-      if len(data[data[FILENAME] == row[FILENAME]]) == 1: continue
-      
-      # Skip if we have already seen this configuration
-      if row[CONFIGURATION] in configurations: continue
-
-      # Get the list of replicates associated with this configuration, note that
-      # we are assuming that using the configuration id is more reliable to distinguish
-      # between configurations than their filename
-      replicates = data[data[CONFIGURATION] == row[CONFIGURATION]][REPLICATE]
-      __plot(replicates, mutations, labels)
-      configurations.append(row[CONFIGURATION])
-      progressBar(index, len(data))
-    except Exception as ex:
-        print('\nError plotting replicate {}, configuration {}'.format(row[REPLICATE], row[FILENAME]))
-        print(ex)
-  progressBar(len(data), len(data))    
-
-
 def main(args):
   # Perform any common setup
   if not os.path.exists(PLOTS_DIRECTORY): os.makedirs(PLOTS_DIRECTORY)
@@ -337,7 +348,7 @@ def main(args):
   if args.type == 'c':
     calibration().process()
   elif args.type == 'd':
-    process()
+    district().process()
   else:
     print('Unknown type parameter, {}'.format(args.type))
      
