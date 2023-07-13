@@ -150,7 +150,7 @@ class district:
     districts = self.mutations.District.unique()
   
     # Start by preparing the replicate data that we need to plot
-    ymax = 0
+    ymax = max(self.mutations.Frequency)
     for replicate in replicates:
       # Load the data and prepare the dates
       data = pd.read_csv('data/spiking/{}.csv'.format(replicate), header = None)
@@ -231,9 +231,9 @@ class district:
         # we are assuming that using the configuration id is more reliable to distinguish
         # between configurations than their filename
         replicates = data[data[CONFIGURATION] == row[CONFIGURATION]][REPLICATE]
-        self.__plot(replicates, '{} ({}), n = {}'.format(
-          row[FILENAME].replace('.yml', ''), row[CONFIGURATION], len(replicates)),
-          '{}-{}.png'.format(row[FILENAME].replace('.yml', ''), row[CONFIGURATION]))
+        parts = row[FILENAME].replace('.yml', '').split('-')
+        title = '{} (pop. {}%)'.format(parts[2].capitalize(), parts[3])
+        self.__plot(replicates, title, row[FILENAME].replace('.yml', '.png'))
         configurations.append(row[CONFIGURATION])
         progressBar(index, len(data))
       except Exception as ex:
