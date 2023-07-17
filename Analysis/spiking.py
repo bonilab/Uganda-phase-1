@@ -232,7 +232,7 @@ class district:
         # between configurations than their filename
         replicates = data[data[CONFIGURATION] == row[CONFIGURATION]][REPLICATE]
         parts = row[FILENAME].replace('.yml', '').split('-')
-        title = '{} (pop. {}%)'.format(parts[2].capitalize(), parts[3])
+        title = '{} (pop. {}%)'.format(parts[2].capitalize(), int(float(parts[3]) * 100))
         self.__plot(replicates, title, row[FILENAME].replace('.yml', '.png'))
         configurations.append(row[CONFIGURATION])
         progressBar(index, len(data))
