@@ -209,7 +209,7 @@ initial_parasite_info:
 events:
   - name: turn_off_mutation
     info:
-      - day: 2009/1/1
+      - day: 2004/1/1
   - name: turn_on_mutation
     info:
       # Lumefantrine (baseline)
