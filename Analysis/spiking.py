@@ -8,8 +8,9 @@ import datetime
 import matplotlib
 import matplotlib.dates
 import matplotlib.pyplot as plt
-import pandas as pd
+import numpy as np
 import os
+import pandas as pd
 
 from include.spike.calibration import calibration
 from include.spike.loader import loader
@@ -81,7 +82,8 @@ class district:
           plt.setp(axes[row, col].get_yticklabels(), visible = False)
           
     # Apply the final figure formatting
-    axes[2, 4].set_visible(False)
+    if len(districts) < 15:
+      axes[2, 4].set_visible(False)
     plt.setp(axes[2, 0].get_xticklabels()[0], visible = False)
     plt.sca(axes[1, 0])
     plt.ylabel(ylabel)
@@ -137,6 +139,59 @@ class district:
     shared.progressBar(len(data), len(data))    
   
 
+def plot_genotypes():
+  
+  def plot(filename, color):
+    row, col = 0, 0
+    data = pd.read_csv(filename)
+    for district in districts:
+      # Plot the frequency points
+      plt.sca(axes[row, col])
+      for index, data_row in data[data.District == district].iterrows():
+        x = datetime.datetime(data_row.Year, 1, 1)
+        y = data_row.Frequency
+        plt.scatter(x, y, color = color, s = 100, zorder = 99)
+      # Move to the next plot
+      row, col = shared.increment(row, col)
+    return max(data.Frequency)
+      
+  # Generate the list of unique districts
+  districts = pd.read_csv(shared.MUTATIONS_469Y).District.unique()  
+  districts = np.append(districts, pd.read_csv(shared.MUTATIONS_675V).District.unique())
+  districts = np.unique(districts)
+  
+  # Prepare the figure
+  matplotlib.rc_file('../Scripts/matplotlibrc-line')
+  figure, axes = plt.subplots(3, 5)
+  
+  # Add the data points
+  ymax = max(plot(shared.MUTATIONS_469Y, 'black'),
+             plot(shared.MUTATIONS_675V, 'red'))
+  
+  # Format the plots
+  row, col = 0, 0
+  for district in districts:
+    axes[row, col].set_ylim([0, ymax])
+    axes[row, col].set_xlim([datetime.datetime(2015, 1, 1), datetime.datetime(2022, 1, 1)])
+    axes[row, col].title.set_text(district)
+    if row != 2:
+      plt.setp(axes[row, col].get_xticklabels(), visible = False)
+    else:
+      axes[row, col].xaxis.set_major_formatter(matplotlib.dates.DateFormatter("'%y"))  
+    if col != 0:
+      plt.setp(axes[row, col].get_yticklabels(), visible = False)
+    row, col = shared.increment(row, col)
+    
+  # Wrap up the formatting
+  plt.setp(axes[2, 0].get_xticklabels()[0], visible = False)
+  plt.sca(axes[1, 0])
+  plt.ylabel('469Y (black) / 675V (red) Frequency')
+
+  # Save the plot
+  plt.savefig('plots/datapoints.png')
+  plt.close()
+
+
 def main(args):
   # Perform any common setup
   if not os.path.exists(shared.PLOTS_DIRECTORY): 
@@ -152,6 +207,8 @@ def main(args):
   elif args.type == 'd':
     district().process('469Y')
     district().process('675V')
+  elif args.type == 'g':
+    plot_genotypes()    
   else:
     print('Unknown type parameter, {}'.format(args.type))
      

@@ -27,3 +27,10 @@ SPIKING_DIRECTORY = 'data/spiking'
 sys.path.insert(1, '../../PSU-CIDD-MaSim-Support/Python/include')
 from database import select
 from utility import progressBar
+
+def increment(row, col):
+  col += 1
+  if col % 5 == 0:
+    row += 1
+    col = 0
+  return row, col
