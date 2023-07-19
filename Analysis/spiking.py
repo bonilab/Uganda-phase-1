@@ -21,7 +21,7 @@ class district:
   mutations = None
   labels = None
   
-  def __plot(self, replicates, year, title, filename):
+  def __plot(self, replicates, year, ylabel, title, filename):
     DATES, DISTRICT, INFECTED, WEIGHTED = 2, 3, 4, 8
   
     # Setup to generate the plot
@@ -84,7 +84,7 @@ class district:
     axes[2, 4].set_visible(False)
     plt.setp(axes[2, 0].get_xticklabels()[0], visible = False)
     plt.sca(axes[1, 0])
-    plt.ylabel('469Y Frequency')
+    plt.ylabel(ylabel)
     plt.sca(axes[2, 2])
     plt.xlabel('Model Year')
     
@@ -92,13 +92,13 @@ class district:
     plt.savefig('plots/{}'.format(filename))
     plt.close()
   
-  def process(self):
+  def process(self, mutation):
     CONFIGURATION, REPLICATE, FILENAME = 0, 3, 2
   
     # Load relevant data
     data = pd.read_csv(shared.REPLICATES_LIST, header = None)
     self.labels = pd.read_csv(shared.DISTRICTS_MAPPING)
-    self.mutations = pd.read_csv(shared.MUTATIONS_469Y)
+    self.mutations = pd.read_csv(shared.MUTATIONS_TEMPLATE.format(mutation))
   
     configurations = []
     shared.progressBar(0, len(data))
@@ -127,8 +127,8 @@ class district:
 
         # Prepare the filename, plot, and note the configuration        
         title = '{} (spike: {:.1f}%, pop.: {}%)'.format(parts[2].capitalize(), spike * 100.0, int(population * 100.0))
-        filename = 'uga-{}-{}-{}-{}.png'.format(parts[2], year, spike, population)
-        self.__plot(replicates, year, title, filename)
+        filename = '{}/uga-{}-{}-{}-{}.png'.format(mutation, parts[2], year, spike, population)
+        self.__plot(replicates, year, '{} Frequency'.format(mutation), title, filename)
         configurations.append(row[CONFIGURATION])
         shared.progressBar(index, len(data))
       except Exception as ex:
@@ -140,7 +140,8 @@ class district:
 def main(args):
   # Perform any common setup
   if not os.path.exists(shared.PLOTS_DIRECTORY): 
-    os.makedirs(shared.PLOTS_DIRECTORY)
+    os.makedirs(os.path.join(shared.PLOTS_DIRECTORY, '469Y'))
+    os.makedirs(os.path.join(shared.PLOTS_DIRECTORY, '675V'))
 
   # Everything goes through the same loader
   loader().load()
@@ -149,7 +150,8 @@ def main(args):
   if args.type == 'c':
     calibration().process()
   elif args.type == 'd':
-    district().process()
+    district().process('469Y')
+    district().process('675V')
   else:
     print('Unknown type parameter, {}'.format(args.type))
      
