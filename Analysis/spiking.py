@@ -50,11 +50,7 @@ class district:
         district_id = self.labels[self.labels.Label == district].ID.values[0]
         axes[row, col].plot(dates, data[data[DISTRICT] == district_id].frequency)
         axes[row, col].title.set_text(district)
-        
-        col += 1
-        if col % 5 == 0:
-          row += 1 
-          col = 0
+        row, col = shared.increment(row, col)
           
     # Next, add the know data points to the plots
     row, col = 0, 0
@@ -64,11 +60,7 @@ class district:
         x = datetime.datetime(data_row.Year, 9, 30)
         y = data_row.Frequency
         plt.scatter(x, y, color = 'black', s = 100, zorder = 99)
-        
-      col += 1
-      if col % 5 == 0:
-        row += 1
-        col = 0
+      row, col = shared.increment(row, col)
           
     # Format the x, y axis and ticks
     for row in range(3):

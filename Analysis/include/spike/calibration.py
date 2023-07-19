@@ -62,10 +62,7 @@ class calibration:
       axes[row, col].set_xlim(xlim)
       axes[row, col].set_ylim(ylim)      
         
-      col += 1
-      if col % 5 == 0:
-        row += 1
-        col = 0
+      row, col = shared.increment(row, col)
     
     # Apply any final formatting
     plt.setp(axes[2, 0].get_xticklabels()[0], visible = False) 
