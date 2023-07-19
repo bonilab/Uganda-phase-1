@@ -21,9 +21,6 @@ from utility import progressBar
 # Connection string for the database
 CONNECTION = 'host=masimdb.vmhost.psu.edu dbname=uganda user=sim password=sim connect_timeout=60'
 
-# Common start date for all configurations
-START_DATE = datetime.datetime(2009, 1, 1)
-
 # Paths for reference data
 DISTRICTS_MAPPING = '../GIS/administrative/uga_districts.csv'
 MIS_MAPPING = '../GIS/administrative/uga_mis_mapping.csv'
@@ -60,9 +57,10 @@ class calibration:
     if max(data.frequency) == 0: return
     
     # Finish setting up our data for plotting
+    # WARNING The start date is hard coded, this might need to change if re-calibration takes place
     districts = data[DISTRICT].unique().tolist()
     dates = data[DATES].unique().tolist()
-    dates = [START_DATE + datetime.timedelta(days=x) for x in dates]  
+    dates = [datetime.datetime(2009, 1, 1) + datetime.timedelta(days=x) for x in dates]  
 
     # Determine our limits
     ylim = [0, max(max(data.frequency), max(mutations.Frequency))]
@@ -138,7 +136,7 @@ class district:
   mutations = None
   labels = None
   
-  def __plot(self, replicates, title, filename):
+  def __plot(self, replicates, year, title, filename):
     DATES, DISTRICT, INFECTED, WEIGHTED = 2, 3, 4, 8
   
     # Setup to generate the plot
@@ -157,7 +155,7 @@ class district:
       data['frequency'] = data[WEIGHTED] / data[INFECTED]
       ymax = max(ymax, max(data.frequency))
       dates = data[DATES].unique().tolist()
-      dates = [START_DATE + datetime.timedelta(days=x) for x in dates]
+      dates = [datetime.datetime(year, 1, 1) + datetime.timedelta(days=x) for x in dates]
   
       # Generate a 15 panel plot while looping over the districts that we have 
       # spiking data for
@@ -226,14 +224,26 @@ class district:
         
         # Skip if we have already seen this configuration
         if row[CONFIGURATION] in configurations: continue
-  
+
         # Get the list of replicates associated with this configuration, note that
         # we are assuming that using the configuration id is more reliable to distinguish
         # between configurations than their filename
         replicates = data[data[CONFIGURATION] == row[CONFIGURATION]][REPLICATE]
+
+        # Determine the year of the study, initially studies started in 2009,
+        # but as calibration progressed it was changed and added to the YAML filename
         parts = row[FILENAME].replace('.yml', '').split('-')
-        title = '{} (pop. {}%)'.format(parts[2].capitalize(), int(float(parts[3]) * 100))
-        self.__plot(replicates, title, row[FILENAME].replace('.yml', '.png'))
+        if len(parts) == 4:
+          year, spike, population = 2009, 0.075, float(parts[3])
+        elif len(parts) == 6:
+          year, spike, population = int(parts[3]), float(parts[4]), float(parts[5])
+        else:
+          exit('\nUnrecognized file format: {}'.format(row[FILENAME]))
+
+        # Prepare the filename, plot, and note the configuration        
+        title = '{} (spike: {:.1f}%, pop.: {}%)'.format(parts[2].capitalize(), spike * 100.0, int(population * 100.0))
+        filename = 'uga-{}-{}-{}-{}.png'.format(parts[2], year, spike, population)
+        self.__plot(replicates, year, title, filename)
         configurations.append(row[CONFIGURATION])
         progressBar(index, len(data))
       except Exception as ex:
