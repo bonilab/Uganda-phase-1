@@ -8,4 +8,4 @@
 #SBATCH --account=mfb9
 
 cd $SLURM_SUBMIT_DIR
-./MaSim -i uga-spike-kole-2004-0.035-0.25.v2.yml -s 4 -r DbReporterDistrict,GenotypeCarriers
+./MaSim -i uga-spike-agago-2004-0.065-0.25.yml -s 4 -r DbReporterDistrict,GenotypeCarriers

@@ -213,22 +213,22 @@ events:
   - name: turn_on_mutation
     info:
       # Lumefantrine (baseline)
-      - day: 2016/1/1
+      - day: 2015/1/1
         drug_id: 1
         mutation_probability: 0.001983  
       # Amodiaquine (baseline)
-      - day: 2016/1/1
+      - day: 2015/1/1
         drug_id: 2
         mutation_probability: 0.001983 
       # Piperaquine (baseline)
-      - day: 2016/1/1
+      - day: 2015/1/1
         drug_id: 3
         mutation_probability: 0.001983        
   - name: introduce_mutant_raster_event
     info:
       - day: 2005/4/1
-        raster: uga_kole.asc
-        fraction: 0.035
+        raster: uga_agago.asc
+        fraction: 0.065
         locus: 2
         mutant_allele: 1
 
