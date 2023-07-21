@@ -257,6 +257,7 @@ drug_db:
     EC50:
       ..0..: 0.75
       ..1..: 1.2
+      ..2..: 1.2
   1:
     name: "LUM"       # Lumefantrine
     half_life: 4.5
@@ -551,20 +552,30 @@ genotype_info:
           daily_cost_of_resistance: 0.006
     - locus_name: "K13 Propeller"
       position: 2
-      # NOTE This is proxy data for R561H since it has not been properly calibrated
+      # NOTE This is proxy data for C469Y and A675V based upon C580Y
       alleles:
+        # Wild type
         - value: 0
-          allele_name: "R561"
-          short_name: "R"
-          can_mutate_to: [1]
+          allele_name: "C469-A675"
+          short_name: "CA"
+          can_mutate_to: [1,2]
           mutation_level: 0
           daily_cost_of_resistance: 0.0
+
+        # Single mutants
         - value: 1
-          allele_name: "561H"
-          short_name: "H"
+          allele_name: "469Y-A675"
+          short_name: "YA"
           can_mutate_to: [0]
           mutation_level: 1
           daily_cost_of_resistance: 0.0005
+        - value: 2
+          allele_name: "C469-675V"
+          short_name: "CV"
+          can_mutate_to: [0]
+          mutation_level: 1
+          daily_cost_of_resistance: 0.0005
+        
     - locus_name: "Plasmepsin 2-3"
       position: 3
       alleles:
