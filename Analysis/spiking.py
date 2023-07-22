@@ -111,17 +111,29 @@ class district:
 
         # Determine the year of the study, initially studies started in 2009,
         # but as calibration progressed it was changed and added to the YAML filename
+        version = None
         parts = row[FILENAME].replace('.yml', '').split('-')
         if len(parts) == 4:
           year, spike, population = 2009, 0.075, float(parts[3])
         elif len(parts) == 6:
-          year, spike, population = int(parts[3]), float(parts[4]), float(parts[5])
+          year, spike = int(parts[3]), float(parts[4])
+          if 'v' in parts[5]:
+            population = float(parts[5][:parts[5].index('v') - 1])
+            version = parts[5][parts[5].index('v') + 1:]
+          else:
+            population = float(parts[5])
         else:
           exit('\nUnrecognized file format: {}'.format(row[FILENAME]))
 
-        # Prepare the filename, plot, and note the configuration        
+        # Prepare the filename and title
         title = '{} (spike: {:.1f}%, pop.: {}%)'.format(parts[2].capitalize(), spike * 100.0, int(population * 100.0))
         filename = '{}/uga-{}-{}-{}-{}.png'.format(mutation, parts[2], year, spike, population)
+        if version is not None:
+          title += ', version {}'.format(version)
+          filename = '{}/uga-{}-{}-{}-{}-v{}.png'.format(
+            mutation, parts[2], year, spike, population, version)
+
+        # Prepare the plot, note the configuration
         self.__plot(replicates, year, '{} Frequency'.format(mutation), title, filename)
         configurations.append(row[CONFIGURATION])
         shared.progressBar(index, len(data))
@@ -186,8 +198,9 @@ def plot_genotypes():
 
 def main(args):
   # Perform any common setup
-  if not os.path.exists(shared.PLOTS_DIRECTORY): 
+  if not os.path.exists(os.path.join(shared.PLOTS_DIRECTORY, '469Y')): 
     os.makedirs(os.path.join(shared.PLOTS_DIRECTORY, '469Y'))
+  if not os.path.exists(os.path.join(shared.PLOTS_DIRECTORY, '675V')):
     os.makedirs(os.path.join(shared.PLOTS_DIRECTORY, '675V'))
 
   # Everything goes through the same loader
