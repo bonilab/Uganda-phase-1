@@ -1,4 +1,4 @@
-# spike_calibration.py
+# calibration.py
 #
 # Include file for the spiking.py script that defines the calibration class.
 import datetime
