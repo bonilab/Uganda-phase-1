@@ -236,7 +236,7 @@ events:
     info:
       - day: 2005/4/1
         raster: uga_kole.asc
-        fraction: 0.075
+        fraction: 0.04
         locus: 2
         mutant_allele: 1
 
