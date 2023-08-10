@@ -53,8 +53,7 @@ class dual_spike:
       dates = data[DATES].unique().tolist()
       dates = [datetime.datetime(self.MODEL_YEAR, 1, 1) + datetime.timedelta(days=x) for x in dates]
   
-      # Generate a 15 panel plot while looping over the districts that we have 
-      # spiking data for
+      # Generate a 15 panel plot while looping over the districts that we have spiking data for
       row, col = 0, 0
       for district in districts:
         district_id = self.labels[self.labels.Label == district].ID.values[0]
@@ -107,7 +106,7 @@ class dual_spike:
     configurations = []
     shared.progressBar(0, len(data))
     for index, row in data.iterrows():
-      # try:
+      try:
         # Check to see if we can skip this entry
         if len(data[data[FILENAME] == row[FILENAME]]) == 1: continue
         if row[CONFIGURATION] in configurations: continue
@@ -117,15 +116,15 @@ class dual_spike:
 
         # Set the title and filename for the results
         title = 'Spike Calibration, {}'.format(mutation)
-        filename = 'uga-spike-{}.png'.format(mutation)
+        filename = 'uga-spike-{}-{}.png'.format(row[CONFIGURATION], mutation)
 
         # Prepare the plot, note the configuration
         self.__plot(replicates, mutation, '{} Frequency'.format(mutation), title, filename)
         configurations.append(row[CONFIGURATION])
         shared.progressBar(index, len(data))
-      # except Exception as ex:
-      #     print('\nError plotting replicate {}, configuration {}'.format(row[REPLICATE], row[FILENAME]))
-      #     print(ex)
+      except Exception as ex:
+          print('\nError plotting replicate {}, configuration {}'.format(row[REPLICATE], row[FILENAME]))
+          print(ex)
     shared.progressBar(len(data), len(data))    
 
   def process(self):
