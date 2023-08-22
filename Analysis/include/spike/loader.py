@@ -31,59 +31,62 @@ class loader:
   # Get the spiking replicate data from the database
   def __get_replicate_single(self, replicateId):
     sql = """
-        SELECT c.id as configurationid, sd.replicateid, sd.dayselapsed,
-          sd.district, infectedindividuals,  clinicalepisodes, 
-          CASE WHEN y_mutant.occurrences IS NULL THEN 0 else y_mutant.occurrences END AS occurrences_469y,
-          CASE WHEN y_mutant.clinicaloccurrences IS NULL THEN 0 else y_mutant.clinicaloccurrences END AS clinicaloccurrences_469y,
-          CASE WHEN y_mutant.weightedoccurrences IS NULL THEN 0 else y_mutant.weightedoccurrences END AS weightedoccurrences_469y,
-          CASE WHEN v_mutant.occurrences IS NULL THEN 0 else v_mutant.occurrences END AS occurrences_675v,
-          CASE WHEN v_mutant.clinicaloccurrences IS NULL THEN 0 else v_mutant.clinicaloccurrences END AS clinicaloccurrences_675v,
-          CASE WHEN v_mutant.weightedoccurrences IS NULL THEN 0 else v_mutant.weightedoccurrences END AS weightedoccurrences_675v,		  
-          treatments,
-          treatmentfailures
+        SELECT *, 
+          (weightedoccurrences_469y + weightedoccurrences_675v) as weightedsum
         FROM (
-          SELECT md.replicateid, md.dayselapsed, msd.location AS district,
-            sum(msd.infectedindividuals) AS infectedindividuals, 
-            sum(msd.clinicalepisodes) AS clinicalepisodes,
-            sum(msd.treatments) AS treatments,
-            sum(msd.treatmentfailures) as treatmentfailures
-          FROM sim.monthlydata md
-            INNER JOIN sim.monthlysitedata msd on msd.monthlydataid = md.id
-          WHERE md.replicateid = %(replicateId)s
-            AND md.dayselapsed > (7 * 365)
-          GROUP BY md.replicateid, md.dayselapsed, msd.location) sd
-        LEFT JOIN (
-          SELECT md.replicateid, md.dayselapsed, mgd.location AS district,
-          sum(mgd.occurrences) AS occurrences,
-            sum(mgd.clinicaloccurrences) AS clinicaloccurrences,
-            sum(mgd.weightedoccurrences) AS weightedoccurrences
-          FROM sim.monthlydata md
-            INNER JOIN sim.monthlygenomedata mgd on mgd.monthlydataid = md.id
-            INNER JOIN sim.genotype g on g.id = mgd.genomeid
-          WHERE md.replicateid = %(replicateId)s
-            AND md.dayselapsed > (7 * 365)
-            AND g.name ~ '^.....Y..'
-          GROUP BY md.replicateid, md.dayselapsed, mgd.location) y_mutant ON (y_mutant.replicateid = sd.replicateid 
-            AND y_mutant.dayselapsed = sd.dayselapsed
-            AND y_mutant.district = sd.district)
-        LEFT JOIN (
-          SELECT md.replicateid, md.dayselapsed, mgd.location AS district,
-          sum(mgd.occurrences) AS occurrences,
-            sum(mgd.clinicaloccurrences) AS clinicaloccurrences,
-            sum(mgd.weightedoccurrences) AS weightedoccurrences
-          FROM sim.monthlydata md
-            INNER JOIN sim.monthlygenomedata mgd on mgd.monthlydataid = md.id
-            INNER JOIN sim.genotype g on g.id = mgd.genomeid
-          WHERE md.replicateid = %(replicateId)s
-            AND md.dayselapsed > (7 * 365)
-            AND g.name ~ '^......V.'
-          GROUP BY md.replicateid, md.dayselapsed, mgd.location) v_mutant ON (v_mutant.replicateid = sd.replicateid 
-            AND v_mutant.dayselapsed = sd.dayselapsed
-            AND v_mutant.district = sd.district)			
-          INNER JOIN sim.replicate r on r.id = sd.replicateid
-          INNER JOIN sim.configuration c on c.id = r.configurationid
-        WHERE r.endtime is not null
-          AND r.id = %(replicateId)s
+          SELECT c.id as configurationid, sd.replicateid, sd.dayselapsed,
+            sd.district, infectedindividuals,  clinicalepisodes, 
+            CASE WHEN y_mutant.occurrences IS NULL THEN 0 else y_mutant.occurrences END AS occurrences_469y,
+            CASE WHEN y_mutant.clinicaloccurrences IS NULL THEN 0 else y_mutant.clinicaloccurrences END AS clinicaloccurrences_469y,
+            CASE WHEN y_mutant.weightedoccurrences IS NULL THEN 0 else y_mutant.weightedoccurrences END AS weightedoccurrences_469y,
+            CASE WHEN v_mutant.occurrences IS NULL THEN 0 else v_mutant.occurrences END AS occurrences_675v,
+            CASE WHEN v_mutant.clinicaloccurrences IS NULL THEN 0 else v_mutant.clinicaloccurrences END AS clinicaloccurrences_675v,
+            CASE WHEN v_mutant.weightedoccurrences IS NULL THEN 0 else v_mutant.weightedoccurrences END AS weightedoccurrences_675v,		  
+            treatments,
+            treatmentfailures
+          FROM (
+            SELECT md.replicateid, md.dayselapsed, msd.location AS district,
+              sum(msd.infectedindividuals) AS infectedindividuals, 
+              sum(msd.clinicalepisodes) AS clinicalepisodes,
+              sum(msd.treatments) AS treatments,
+              sum(msd.treatmentfailures) as treatmentfailures
+            FROM sim.monthlydata md
+              INNER JOIN sim.monthlysitedata msd on msd.monthlydataid = md.id
+            WHERE md.replicateid = %(replicateId)s
+              AND md.dayselapsed > (7 * 365)
+            GROUP BY md.replicateid, md.dayselapsed, msd.location) sd
+          LEFT JOIN (
+            SELECT md.replicateid, md.dayselapsed, mgd.location AS district,
+            sum(mgd.occurrences) AS occurrences,
+              sum(mgd.clinicaloccurrences) AS clinicaloccurrences,
+              sum(mgd.weightedoccurrences) AS weightedoccurrences
+            FROM sim.monthlydata md
+              INNER JOIN sim.monthlygenomedata mgd on mgd.monthlydataid = md.id
+              INNER JOIN sim.genotype g on g.id = mgd.genomeid
+            WHERE md.replicateid = %(replicateId)s
+              AND md.dayselapsed > (7 * 365)
+              AND g.name ~ '^.....Y..'
+            GROUP BY md.replicateid, md.dayselapsed, mgd.location) y_mutant ON (y_mutant.replicateid = sd.replicateid 
+              AND y_mutant.dayselapsed = sd.dayselapsed
+              AND y_mutant.district = sd.district)
+          LEFT JOIN (
+            SELECT md.replicateid, md.dayselapsed, mgd.location AS district,
+            sum(mgd.occurrences) AS occurrences,
+              sum(mgd.clinicaloccurrences) AS clinicaloccurrences,
+              sum(mgd.weightedoccurrences) AS weightedoccurrences
+            FROM sim.monthlydata md
+              INNER JOIN sim.monthlygenomedata mgd on mgd.monthlydataid = md.id
+              INNER JOIN sim.genotype g on g.id = mgd.genomeid
+            WHERE md.replicateid = %(replicateId)s
+              AND md.dayselapsed > (7 * 365)
+              AND g.name ~ '^......V.'
+            GROUP BY md.replicateid, md.dayselapsed, mgd.location) v_mutant ON (v_mutant.replicateid = sd.replicateid 
+              AND v_mutant.dayselapsed = sd.dayselapsed
+              AND v_mutant.district = sd.district)			
+            INNER JOIN sim.replicate r on r.id = sd.replicateid
+            INNER JOIN sim.configuration c on c.id = r.configurationid
+          WHERE r.endtime is not null
+            AND r.id = %(replicateId)s) iq
         ORDER BY replicateid, dayselapsed"""
     return shared.select(shared.CONNECTION, sql, {'replicateId':replicateId})  
 

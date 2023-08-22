@@ -29,11 +29,20 @@ class dual_spike:
   
   def __plot(self, replicates, mutation, ylabel, title, filename):
     DATES, DISTRICT, INFECTIONS = 2, 3, 4
+    MAPPING = { '469Y' : 8, '675V' : 11, 'either' : 14 }
+
+    def add_points():
+      row, col = 0, 0
+      for district in districts:
+        plt.sca(axes[row, col])
+        for index, data_row in self.mutations[self.mutations.District == district].iterrows():
+          x = datetime.datetime(data_row.Year, 9, 30)
+          y = data_row.Frequency
+          plt.scatter(x, y, color = 'black', s = 100, zorder = 99)
+        row, col = shared.increment(row, col)
 
     # Note the correct index of the weighted values
-    if mutation == '469Y': weighted = 8
-    elif mutation == '675V': weighted = 11
-    else: raise Exception('Unknown mutation: {}'.format(mutation))
+    weighted = MAPPING[mutation]
   
     # Setup to generate the plot
     matplotlib.rc_file('../Scripts/matplotlibrc-line')
@@ -61,15 +70,8 @@ class dual_spike:
         axes[row, col].title.set_text(district)
         row, col = shared.increment(row, col)
           
-    # Next, add the know data points to the plots
-    row, col = 0, 0
-    for district in districts:
-      plt.sca(axes[row, col])
-      for index, data_row in self.mutations[self.mutations.District == district].iterrows():
-        x = datetime.datetime(data_row.Year, 9, 30)
-        y = data_row.Frequency
-        plt.scatter(x, y, color = 'black', s = 100, zorder = 99)
-      row, col = shared.increment(row, col)
+    # Next, add the known data points to the plots unless we are plotting the total resistance
+    if mutation != 'either': add_points()
           
     # Format the x, y axis and ticks
     for row in range(3):
@@ -97,11 +99,14 @@ class dual_spike:
   
   def __process(self, mutation):
     CONFIGURATION, REPLICATE, FILENAME = 0, 3, 2
-  
+
     # Load relevant data
     data = pd.read_csv(shared.REPLICATES_LIST, header = None)
     self.labels = pd.read_csv(shared.DISTRICTS_MAPPING)
-    self.mutations = pd.read_csv(shared.MUTATIONS_TEMPLATE.format(mutation))
+    if mutation == 'either':
+      self.mutations = pd.read_csv(shared.MUTATIONS_TEMPLATE.format('675V'))
+    else:  
+      self.mutations = pd.read_csv(shared.MUTATIONS_TEMPLATE.format(mutation))
   
     configurations = []
     shared.progressBar(0, len(data))
@@ -116,6 +121,8 @@ class dual_spike:
 
         # Set the title and filename for the results
         title = 'Spike Calibration, {}'.format(mutation)
+        if mutation == 'either':
+          title = 'Total ART Resistance'
         filename = 'uga-spike-{}-{}.png'.format(row[CONFIGURATION], mutation)
 
         # Prepare the plot, note the configuration
@@ -130,6 +137,7 @@ class dual_spike:
   def process(self):
     self.__process('469Y')
     self.__process('675V')
+    self.__process('either')
 
 
 def plot_genotypes():
