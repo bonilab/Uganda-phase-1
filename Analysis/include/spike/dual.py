@@ -17,7 +17,7 @@ class dual_spike:
   mutations = None
   labels = None
   
-  def __plot(self, replicates, mutation, ylabel, title, filename):
+  def __plot(self, replicates, mutation, ylabel, title, footer, filename):
     DATES, DISTRICT, INFECTIONS = 2, 3, 4
     MAPPING = { '469Y' : 8, '675V' : 11, 'either' : 14 }
 
@@ -38,6 +38,7 @@ class dual_spike:
     matplotlib.rc_file('../Scripts/matplotlibrc-line')
     figure, axes = plt.subplots(3, 5)
     figure.suptitle(title, y = 0.94)
+    figure.text(0.5 - (len(footer) / 400), 0.04, footer, size='small')
     
     # Set a single order for the districts
     districts = self.mutations.District.unique()
@@ -111,12 +112,15 @@ class dual_spike:
 
         # Set the title and filename for the results
         title = 'Spike Calibration, {}'.format(mutation)
+        ylabel = '{} Frequency'.format(mutation)
         if mutation == 'either':
           title = 'Total ART Resistance'
+          ylabel = 'Total ART Resistance Frequency'
+        footer = '{}, n = {}'.format(row[FILENAME], len(replicates))
         filename = 'uga-spike-{}-{}.png'.format(row[CONFIGURATION], mutation)
 
         # Prepare the plot, note the configuration
-        self.__plot(replicates, mutation, '{} Frequency'.format(mutation), title, filename)
+        self.__plot(replicates, mutation, ylabel, title, footer, filename)
         configurations.append(row[CONFIGURATION])
         shared.progressBar(index, len(data))
       except Exception as ex:
