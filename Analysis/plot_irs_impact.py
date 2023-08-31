@@ -46,6 +46,14 @@ def plot(filterOn):
   __plot(TEMPLATE.format(filterOn, ''), 0) 
   __plot(TEMPLATE.format(filterOn, '-steady'), 1)
     
+  # Draw the intervention line, 2015
+  axes[0].axvline(x=4018, color='green')
+  
+  # Draw beta intervention lines
+  axes[0].axvline(x=4749, color='red')                          # 2017
+  axes[0].axvline(x=5114, color='red')                          # 2018
+  if filterOn == 'high': axes[0].axvline(x=5479, color='red')   # 2019
+  
   # Format the plot
   axes[0].title.set_text('{} Prevalence, IRS'.format(filterOn.capitalize()))
   axes[1].title.set_text('{} Prevalence, No Intervention'.format(filterOn.capitalize()))
@@ -57,5 +65,5 @@ def plot(filterOn):
         
     
 if __name__ == '__main__':
-  # plot('high')
-  plot('low')
+  plot('high')
+  # plot('low')
