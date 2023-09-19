@@ -1,0 +1,11 @@
+#!/bin/bash
+
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --mem=24GB
+#SBATCH --time=48:00:00
+#SBATCH --partition=sla-prio
+#SBATCH --account=mfb9
+
+cd $SLURM_SUBMIT_DIR
+./MaSim -i uga-policy-sft-dhappq.yml -s 5 -r DbReporterDistrict
