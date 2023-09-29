@@ -32,7 +32,8 @@ class loader:
   def __get_replicate_single(self, replicateId):
     sql = """
         SELECT *, 
-          (weightedoccurrences_469y + weightedoccurrences_675v) as weightedsum
+          (weightedoccurrences_469y + weightedoccurrences_675v) as weightedsum,
+          (occurrences_469Y + occurrences_675v) as occurrences_sum
         FROM (
           SELECT c.id as configurationid, sd.replicateid, sd.dayselapsed,
             sd.district, infectedindividuals,  clinicalepisodes, 
