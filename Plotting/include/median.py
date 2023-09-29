@@ -98,36 +98,42 @@ class median:
     plt.close()
   
 
-  def __process(self, mutation):
+  def __process(self):
     MAPPING = { '469Y' : 8, '675V' : 11, 'either' : 14 }
     
-    # Status update for the user
-    print('Processing {} for {}'.format(self.dataset, mutation))    
-
-    # Load relevant data, calculate the frequency and the dates
+    # Load relevant data, dates, and labels
     data = pd.read_csv(self.dataset, header=None)
-    data['frequency'] = data[MAPPING[mutation]] / data[self.INFECTIONS]
     dates = data[self.DATES].unique().tolist()
     dates = [datetime.datetime(uganda.MODEL_YEAR, 1, 1) + datetime.timedelta(days=x) for x in dates]
-
-    # Load the remainder of the data
     self.labels = pd.read_csv(uganda.DISTRICTS_MAPPING)
-    if mutation == 'either':
-      self.mutations = pd.read_csv(uganda.MUTATIONS_TEMPLATE.format('675V'))
-    else:  
-      self.mutations = pd.read_csv(uganda.MUTATIONS_TEMPLATE.format(mutation))
-  
-    # Set the title, labels, and filename for the results
-    title = '{}, {}'.format(self.title, mutation)
-    ylabel = '{} Frequency'.format(mutation)
-    if mutation == 'either':
-      title = '{} / Total ART Resistance'.format(self.title)
-      ylabel = 'Total ART Resistance Frequency'
-    filename = self.dataset.split('/')[-1].replace('uga-policy-', '').replace('.csv', '')
-    filename += '-{}.png'.format(mutation)
 
-    # Prepare the plot, note the configuration
-    self.__plot(data, dates, mutation, ylabel, title, filename)
+    for mutation in MAPPING.keys():
+
+      # Status update for the user
+      print('Processing {} for {}'.format(self.dataset, mutation))
+
+      # Calculate the frequency, prepare the mutation data
+      data['frequency'] = data[MAPPING[mutation]] / data[self.INFECTIONS]
+      if mutation == 'either':
+        # We use the district with more points if either mutation is plotting
+        self.mutations = pd.read_csv(uganda.MUTATIONS_TEMPLATE.format('675V'))
+      else:  
+        self.mutations = pd.read_csv(uganda.MUTATIONS_TEMPLATE.format(mutation))
+    
+      # Set the title, labels, and filename for the results
+      title = '{}, {}'.format(self.title, mutation)
+      ylabel = '{} Frequency'.format(mutation)
+      if mutation == 'either':
+        title = '{} / Total ART Resistance'.format(self.title)
+        ylabel = 'Total ART Resistance Frequency'
+      filename = self.dataset.split('/')[-1].replace('uga-policy-', '').replace('.csv', '')
+      filename += '-{}.png'.format(mutation)
+
+      # Prepare the plot
+      self.__plot(data, dates, mutation, ylabel, title, filename)
+
+    # Free the memory and return
+    del data
 
 
   def process(self, dataset, title):
@@ -136,6 +142,4 @@ class median:
     dataset - The full or relative path to the file"""
     self.dataset = dataset
     self.title = title
-    self.__process('469Y')
-    self.__process('675V')
-    self.__process('either')
+    self.__process()

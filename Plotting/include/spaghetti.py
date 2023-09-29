@@ -37,7 +37,7 @@ class spaghetti:
         row, col = increment(row, col, COLUMNS)
   
     # Setup to generate the plot
-    matplotlib.rc_file('matplotlibrc-line')
+    matplotlib.rc_file(uganda.LINE_CONFIGURATION)
     figure, axes = plt.subplots(ROWS, COLUMNS)
     figure.suptitle(title, y = 0.94)
     
