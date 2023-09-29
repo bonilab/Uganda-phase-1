@@ -1,6 +1,7 @@
 # spike_common.py
 #
 # Include file for the shared data between the spiking scripts.
+import csv
 import sys
 
 # Connection string for the database
@@ -34,3 +35,9 @@ def increment(row, col):
     row += 1
     col = 0
   return row, col
+
+def save_csv(filename, data):
+  with open(filename, 'w') as csvfile:
+    writer = csv.writer(csvfile)
+    for row in data:
+      writer.writerow(row)
