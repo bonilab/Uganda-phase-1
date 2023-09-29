@@ -13,6 +13,7 @@ GIS/reference/uga_population.asc
 **/*.asc.xml
 
 # Exclude working directories
+**/cache/**
 **/data/**
 **/plots/**
 **/out/**
