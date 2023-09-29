@@ -6,6 +6,7 @@
 import os
 
 from include.spaghetti import spaghetti 
+from include.median import median
 
 def make_plots(plot):
   plot.process('../Analysis/data/datasets/uga-policy-status-quo.csv', 'Status Quo')
@@ -25,5 +26,6 @@ def make_plots(plot):
   
 if __name__ == '__main__':
   os.makedirs('out', exist_ok=True)
-  make_plots(spaghetti())
   
+  make_plots(spaghetti())
+  make_plots(median())

@@ -1,9 +1,10 @@
-# spaghetti.py
+# median.py
 #
-# This class wraps the functions related to plotting a spaghetti plot.
+# This class wraps the functions related to plotting the median and IQR.
 import datetime
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import sys
 
@@ -11,11 +12,11 @@ import include.uganda as uganda
 
 # From the PSU-CIDD-MaSim-Support repository
 sys.path.insert(1, '../../PSU-CIDD-MaSim-Support/Python/include')
-from plotting import increment
+from plotting import increment, scale_luminosity
 
-class spaghetti:
+class median:
   # Internal mapping of the dataset columns
-  DATES, DISTRICT, INFECTIONS = 2, 3, 4
+  REPLICATE, DATES, DISTRICT, INFECTIONS = 1, 2, 3, 4
   
   # Various private member variables for data processing
   dataset, mutations = None, None
@@ -37,26 +38,38 @@ class spaghetti:
         row, col = increment(row, col, COLUMNS)
   
     # Setup to generate the plot
-    matplotlib.rc_file('matplotlibrc-line')
+    matplotlib.rc_file(uganda.LINE_CONFIGURATION)
     figure, axes = plt.subplots(ROWS, COLUMNS)
     figure.suptitle(title, y = 0.94)
     
     # Set a single order for the districts
     districts = self.mutations.District.unique()
   
-    # Start by preparing the replicate data that we need to plot
-    for replicate in data[1].unique():
-      # Load the data and prepare the dates
-      replicate_data = data[data[1] == replicate]
-  
-      # Generate a 15 panel plot while looping over the districts that we have spiking data for
-      row, col = 0, 0
+    # Get the frequency data and transpose it
+    frequencies = {}
+    for replicate in data[self.REPLICATE].unique():
       for district in districts:
-        district_id = self.labels[self.labels.Label == district].ID.values[0]
-        axes[row, col].plot(dates, replicate_data[replicate_data[self.DISTRICT] == district_id].frequency)
-        axes[row, col].title.set_text(district)
-        row, col = increment(row, col, COLUMNS)
-          
+        id = self.labels[self.labels.Label == district].ID.values[0]
+        row = data[(data[self.DISTRICT] == id) & (data[self.REPLICATE] == replicate)].frequency.tolist()
+        if district in frequencies.keys():
+          frequencies[district] = np.vstack((frequencies[district], row))
+        else:
+          frequencies[district] = row
+
+    # Generate a 15 panel plot while looping over the districts that we have spiking data for
+    row, col = 0, 0
+    for district in districts:
+      upper = np.percentile(frequencies[district], 75, axis=0)
+      median = np.percentile(frequencies[district], 50, axis=0)
+      lower = np.percentile(frequencies[district], 25, axis=0)
+
+      # Add the data to the plot
+      axes[row, col].plot(dates, median)
+      color = scale_luminosity(axes[row, col].lines[-1].get_color(), 1)
+      axes[row, col].fill_between(dates, lower, upper, alpha=0.5, facecolor=color)
+      axes[row, col].title.set_text(district)
+      row, col = increment(row, col, COLUMNS)
+        
     # Next, add the known data points to the plots unless we are plotting the total resistance
     if mutation != 'either': add_points()
           
@@ -84,6 +97,7 @@ class spaghetti:
     plt.savefig('out/{}'.format(filename))
     plt.close()
   
+
   def __process(self, mutation):
     MAPPING = { '469Y' : 8, '675V' : 11, 'either' : 14 }
     

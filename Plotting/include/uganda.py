@@ -16,3 +16,6 @@ MUTATIONS_TEMPLATE = '../GIS/mutations/uga_{}_mutations.csv'
 MUTATIONS_469Y = '../GIS/mutations/uga_469y_mutations.csv'
 MUTATIONS_675V = '../GIS/mutations/uga_675v_mutations.csv'
 
+# Settings for plots
+LINE_CONFIGURATION = 'include/matplotlibrc-line'
+VIOLIN_CONFIGURATION = 'include/matplotlibrc-violin'
