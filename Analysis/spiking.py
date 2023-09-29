@@ -16,7 +16,7 @@ from include.spike.calibration import calibration
 from include.spike.dual import dual_spike
 from include.spike.district import district
 from include.spike.loader import loader
-import include.spike.common as shared
+import include.common as shared
 
 
 def plot_genotypes():

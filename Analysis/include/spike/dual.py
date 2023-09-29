@@ -6,7 +6,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
 
-import include.spike.common as shared
+import include.common as shared
 
 # This class wraps the functions related to plotting dual spike studies and 
 # the spike calibration / validation studies.

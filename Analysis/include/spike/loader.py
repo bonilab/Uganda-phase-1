@@ -7,7 +7,7 @@
 import csv
 import os
 
-import include.spike.common as shared
+import include.common as shared
 
 # This class wraps the functions related to loading replicate data.
 class loader:

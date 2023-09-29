@@ -6,7 +6,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
 
-import include.spike.common as shared
+import include.common as shared
 
 # This class warps the functions related to plotting calibration studies.
 class calibration:
