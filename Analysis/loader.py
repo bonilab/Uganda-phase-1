@@ -4,6 +4,7 @@
 # 
 # Load the relevant data from the database.
 import os
+import pandas as pd
 import sys
 
 import include.common as shared
@@ -106,7 +107,7 @@ def main(studyId):
     replicates = get_replicates(5)
     shared.save_csv(REPLICATES_LIST, replicates)
 
-    # Query fro the replicates
+    # Query for the replicates
     count = 0
     progressBar(count, len(replicates))
     for row in replicates:
@@ -124,7 +125,40 @@ def main(studyId):
         progressBar(count, len(replicates))
 
     # Complete progress bar for replicates
-    if count != len(replicates): progressBar(len(replicates), len(replicates))        
+    if count != len(replicates): progressBar(len(replicates), len(replicates))
+    
+    # Merge the replicates into their data sets
+    replicates = pd.read_csv(REPLICATES_LIST, header=None)
+    for configuration in replicates[2].unique():
+        print('Merging {}...'.format(configuration.replace('.yml', '')))
+        configuration_replicates = replicates[replicates[2] == configuration]
+        filename = os.path.join(DATASET_DIRECTORY, configuration.replace('yml', 'csv'))
+        merge_data(configuration_replicates[3].to_list(), REPLICATE_DIRECTORY, filename)
+
+
+def merge_data(replicates, path, outfile):
+  # Let the user know we haven't hung
+  count = 0
+  progressBar(count, len(replicates))
+
+  # Read the first file so we have something to append to
+  infile = os.path.join(path, "{}.csv".format(replicates[0]))
+  data = pd.read_csv(infile, header=None)
+
+  for replicate in replicates[1:]:
+    # Load the file from the disk
+    infile = os.path.join(path, "{}.csv".format(replicate))
+    working = pd.read_csv(infile, header=None)
+    data = data.append(working)
+
+    # Update the status
+    count += 1
+    progressBar(count, len(replicates))
+    
+  # Save and produce the final status bar
+  data.to_csv(outfile, header=None, index=False)
+  if count != len(replicates): progressBar(len(replicates), len(replicates))
+
 
 
 if __name__ == '__main__':
