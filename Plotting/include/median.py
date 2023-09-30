@@ -154,13 +154,13 @@ class median:
       image_filename += '-national-{}.png'.format(mutation)
 
       # Prepare the plot
-      self.__plot_national(data, dates, mutation, ylabel, title, image_filename)
+      self.__plot_national(data, dates, ylabel, title, image_filename)
 
     # Free the memory before returning
     del data
 
   
-  def __plot_national(self, data, dates, mutation, ylabel, title, filename):
+  def __plot_national(self, data, dates, ylabel, title, filename):
 
     # Get the frequency data and transpose it
     frequencies = []
@@ -176,11 +176,19 @@ class median:
     median = np.percentile(frequencies, 50, axis=0)
     lower = np.percentile(frequencies, 25, axis=0)
 
-    # Setup to generate the plot
+    # Setup and format the plot
     matplotlib.rc_file(uganda.LINE_CONFIGURATION)
+    axes = plt.axes()
+    axes.set_xlim([min(dates), max(dates)])
+    axes.set_ylim([0, 1.0])
+    axes.set_title(title)
+    axes.set_ylabel(ylabel)
 
-    # TODO Finish up the plot and apply the formatting
+    # Add the data
     plt.plot(dates, median)
+    color = scale_luminosity(plt.gca().lines[-1].get_color(), 1)
+    plt.fill_between(dates, lower, upper, alpha=0.5, facecolor=color)
+
     plt.savefig('out/{}'.format(filename))
     plt.close()
 
