@@ -17,34 +17,24 @@ from plotting import increment, scale_luminosity
 class median:
   # Internal mapping of the dataset columns
   REPLICATE, DATES, DISTRICT, INFECTIONS = 1, 2, 3, 4
-  
-  # Various private member variables for data processing
-  dataset, mutations = None, None
-  
+  MAPPING = { '469Y' : 8, '675V' : 11, 'either' : 14 }
+    
   # Various private member variables for formatting
   labels, title = None, None
   
-  def __districts(self):
-    MAPPING = { '469Y' : 8, '675V' : 11, 'either' : 14 }
-    
+  def __districts(self, filename):
     # Load relevant data, dates, and labels
-    data = pd.read_csv(self.dataset, header=None)
+    data = pd.read_csv(filename, header=None)
     dates = data[self.DATES].unique().tolist()
     dates = [datetime.datetime(uganda.MODEL_YEAR, 1, 1) + datetime.timedelta(days=x) for x in dates]
     self.labels = pd.read_csv(uganda.DISTRICTS_MAPPING)
 
-    for mutation in MAPPING.keys():
-
+    for mutation, index in self.MAPPING.items():
       # Status update for the user
-      print('Processing {} for {}'.format(self.dataset, mutation))
+      print('Processing districts {} for {}...'.format(filename, mutation))
 
-      # Calculate the frequency, prepare the mutation data
-      data['frequency'] = data[MAPPING[mutation]] / data[self.INFECTIONS]
-      if mutation == 'either':
-        # We use the district with more points if either mutation is plotting
-        self.mutations = pd.read_csv(uganda.MUTATIONS_TEMPLATE.format('675V'))
-      else:  
-        self.mutations = pd.read_csv(uganda.MUTATIONS_TEMPLATE.format(mutation))
+      # Calculate the frequency based on the current mutation
+      data['frequency'] = data[index] / data[self.INFECTIONS]
     
       # Set the title, labels, and filename for the results
       title = '{}, {}'.format(self.title, mutation)
@@ -52,14 +42,15 @@ class median:
       if mutation == 'either':
         title = '{} / Total ART Resistance'.format(self.title)
         ylabel = 'Total ART Resistance Frequency'
-      filename = self.dataset.split('/')[-1].replace('uga-policy-', '').replace('.csv', '')
-      filename += '-{}.png'.format(mutation)
+      image_filename = filename.split('/')[-1].replace('uga-policy-', '').replace('.csv', '')
+      image_filename += '-{}.png'.format(mutation)
 
       # Prepare the plot
-      self.__plot_districts(data, dates, mutation, ylabel, title, filename)
+      self.__plot_districts(data, dates, mutation, ylabel, title, image_filename)
 
-    # Free the memory and return
+    # Free the memory before returning
     del data
+
 
   def __plot_districts(self, data, dates, mutation, ylabel, title, filename):
     ROWS, COLUMNS = 3, 5
@@ -68,19 +59,19 @@ class median:
       row, col = 0, 0
       for district in districts:
         plt.sca(axes[row, col])
-        for index, data_row in self.mutations[self.mutations.District == district].iterrows():
+        for index, data_row in mutation_points[mutation_points.District == district].iterrows():
           x = datetime.datetime(data_row.Year, 9, 30)
           y = data_row.Frequency
           plt.scatter(x, y, color = 'black', s = 100, zorder = 99)
         row, col = increment(row, col, COLUMNS)
   
-    # Setup to generate the plot
-    matplotlib.rc_file(uganda.LINE_CONFIGURATION)
-    figure, axes = plt.subplots(ROWS, COLUMNS)
-    figure.suptitle(title, y = 0.94)
-    
-    # Set a single order for the districts
-    districts = self.mutations.District.unique()
+    # Load the mutation point data 
+    if mutation == 'either':
+      # We use the district with more points if either mutation is plotting
+      mutation_points = pd.read_csv(uganda.MUTATIONS_TEMPLATE.format('675V'))
+    else:  
+      mutation_points = pd.read_csv(uganda.MUTATIONS_TEMPLATE.format(mutation))    
+    districts = mutation_points.District.unique()
   
     # Get the frequency data and transpose it
     frequencies = {}
@@ -92,6 +83,11 @@ class median:
           frequencies[district] = np.vstack((frequencies[district], row))
         else:
           frequencies[district] = row
+
+    # Setup to generate the plot
+    matplotlib.rc_file(uganda.LINE_CONFIGURATION)
+    figure, axes = plt.subplots(ROWS, COLUMNS)
+    figure.suptitle(title, y = 0.94)
 
     # Generate a 15 panel plot while looping over the districts that we have spiking data for
     row, col = 0, 0
@@ -135,10 +131,65 @@ class median:
     plt.close()
   
 
-  def process(self, dataset, title):
+  def __national(self, filename):
+    # Since we need national summary data, we can use the cache if it is available
+    data = uganda.load_dataset(filename)
+    dates = data.days.unique().tolist()
+    dates = [datetime.datetime(uganda.MODEL_YEAR, 1, 1) + datetime.timedelta(days=x) for x in dates]
+
+    for mutation in self.MAPPING.keys():
+      # Status update for the user
+      print('Processing national {} for {}...'.format(filename, mutation))
+
+      # Calculate the frequency based on the current mutation
+      data['frequency'] = data[mutation] / data.infections
+
+      # Set the title, labels, and filename for the results
+      title = '{}, {}'.format(self.title, mutation)
+      ylabel = '{} Frequency'.format(mutation)
+      if mutation == 'either':
+        title = '{} / Total ART Resistance'.format(self.title)
+        ylabel = 'Total ART Resistance Frequency'
+      image_filename = filename.split('/')[-1].replace('uga-policy-', '').replace('.csv', '')
+      image_filename += '-national-{}.png'.format(mutation)
+
+      # Prepare the plot
+      self.__plot_national(data, dates, mutation, ylabel, title, image_filename)
+
+    # Free the memory before returning
+    del data
+
+  
+  def __plot_national(self, data, dates, mutation, ylabel, title, filename):
+
+    # Get the frequency data and transpose it
+    frequencies = []
+    for replicate in data.replicate.unique():
+        row = data[data.replicate == replicate].frequency.tolist()
+        if len(frequencies) != 0:
+          frequencies = np.vstack((frequencies, row))
+        else:
+          frequencies = row
+
+    # Calculate the median and IQR
+    upper = np.percentile(frequencies, 75, axis=0)
+    median = np.percentile(frequencies, 50, axis=0)
+    lower = np.percentile(frequencies, 25, axis=0)
+
+    # Setup to generate the plot
+    matplotlib.rc_file(uganda.LINE_CONFIGURATION)
+
+    # TODO Finish up the plot and apply the formatting
+    plt.plot(dates, median)
+    plt.savefig('out/{}'.format(filename))
+    plt.close()
+
+
+
+  def process(self, filename, title):
     """Process the dataset in the file and generate three spaghetti plots.
     
     dataset - The full or relative path to the file"""
-    self.dataset = dataset
     self.title = title
-    self.__districts()
+    # self.__districts(filename)
+    self.__national(filename)
