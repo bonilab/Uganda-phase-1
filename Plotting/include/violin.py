@@ -100,16 +100,15 @@ class violin:
     for allele in ['469Y', '675V', 'either']:
       print('Generating {} allele plots...'.format(allele))
       for endpoint, bounds in self.ENDPOINTS.items():
-        days = dates[bounds[1]]
-        if bounds[1] is None: days= dates[-1]
+        range = dates[bounds[0]:bounds[1]]
               
         # Offer some validation that this the correct bounds  
         date = datetime.datetime(uganda.MODEL_YEAR, 1, 1)
-        print('{} Year: {:%Y-%m}'.format(endpoint, date + datetime.timedelta(days=int(days))))
+        print('{} Year: {:%Y-%m}'.format(endpoint, date + datetime.timedelta(days=int(range[-1]))))
 
         # Prepare the actual plot
         filename = 'frequency-{}-{}-year.png'.format(allele, bounds[2])
-        self.__plot_frequencies(data, allele, days, filename)
+        self.__plot_frequencies(data, allele, range[-1], filename)
 
 
   def __plot_frequencies(self, data, allele, date, filename):
