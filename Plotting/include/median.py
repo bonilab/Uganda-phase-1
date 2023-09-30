@@ -199,5 +199,5 @@ class median:
     
     dataset - The full or relative path to the file"""
     self.title = title
-    # self.__districts(filename)
+    self.__districts(filename)
     self.__national(filename)

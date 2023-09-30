@@ -16,9 +16,7 @@ from plotting import increment
 class spaghetti:
   # Internal mapping of the dataset columns
   DATES, DISTRICT, INFECTIONS = 2, 3, 4
-  
-  # Various private member variables for data processing
-  dataset, mutations = None, None
+  MAPPING = { '469Y' : 8, '675V' : 11, 'either' : 14 }
   
   # Various private member variables for formatting
   labels, title = None, None
@@ -84,44 +82,42 @@ class spaghetti:
     plt.savefig('out/{}'.format(filename))
     plt.close()
   
-  def __process(self, mutation):
-    MAPPING = { '469Y' : 8, '675V' : 11, 'either' : 14 }
-    
-    # Status update for the user
-    print('Processing {} for {}'.format(self.dataset, mutation))    
-
+  def __districts(self, filename):    
     # Load relevant data, calculate the frequency and the dates
-    data = pd.read_csv(self.dataset, header=None)
-    data['frequency'] = data[MAPPING[mutation]] / data[self.INFECTIONS]
+    data = pd.read_csv(filename, header=None)
     dates = data[self.DATES].unique().tolist()
     dates = [datetime.datetime(uganda.MODEL_YEAR, 1, 1) + datetime.timedelta(days=x) for x in dates]
 
-    # Load the remainder of the data
-    self.labels = pd.read_csv(uganda.DISTRICTS_MAPPING)
-    if mutation == 'either':
-      self.mutations = pd.read_csv(uganda.MUTATIONS_TEMPLATE.format('675V'))
-    else:  
-      self.mutations = pd.read_csv(uganda.MUTATIONS_TEMPLATE.format(mutation))
-  
-    # Set the title, labels, and filename for the results
-    title = '{}, {}'.format(self.title, mutation)
-    ylabel = '{} Frequency'.format(mutation)
-    if mutation == 'either':
-      title = '{} / Total ART Resistance'.format(self.title)
-      ylabel = 'Total ART Resistance Frequency'
-    filename = self.dataset.split('/')[-1].replace('uga-policy-', '').replace('.csv', '')
-    filename += '-{}.png'.format(mutation)
+    for mutation, index in self.MAPPING.items():
+      # Status update for the user
+      print('Processing {} for {}'.format(filename, mutation))    
 
-    # Prepare the plot, note the configuration
-    self.__plot(data, dates, mutation, ylabel, title, filename)
+      # Calculate the frequency based on the current mutation 
+      data['frequency'] = data[index] / data[self.INFECTIONS]
+
+      # Load the remainder of the data
+      self.labels = pd.read_csv(uganda.DISTRICTS_MAPPING)
+      if mutation == 'either':
+        self.mutations = pd.read_csv(uganda.MUTATIONS_TEMPLATE.format('675V'))
+      else:  
+        self.mutations = pd.read_csv(uganda.MUTATIONS_TEMPLATE.format(mutation))
+    
+      # Set the title, labels, and filename for the results
+      title = '{}, {}'.format(self.title, mutation)
+      ylabel = '{} Frequency'.format(mutation)
+      if mutation == 'either':
+        title = '{} / Total ART Resistance'.format(self.title)
+        ylabel = 'Total ART Resistance Frequency'
+      image_filename = filename.split('/')[-1].replace('uga-policy-', '').replace('.csv', '')
+      image_filename += '-{}.png'.format(mutation)
+
+      # Prepare the plot, note the configuration
+      self.__plot(data, dates, mutation, ylabel, title, image_filename)
 
 
-  def process(self, dataset, title):
+  def process(self, filename, title):
     """Process the dataset in the file and generate three spaghetti plots.
     
     dataset - The full or relative path to the file"""
-    self.dataset = dataset
     self.title = title
-    self.__process('469Y')
-    self.__process('675V')
-    self.__process('either')
+    self.__districts(filename)
