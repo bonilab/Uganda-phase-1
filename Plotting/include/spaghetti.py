@@ -4,35 +4,34 @@
 import datetime
 import matplotlib
 import matplotlib.pyplot as plt
+import os
 import pandas as pd
 import sys
 
 import include.uganda as uganda
+from include.uganda import DATASET_LAYOUT
 
 # From the PSU-CIDD-MaSim-Support repository
 sys.path.insert(1, '../../PSU-CIDD-MaSim-Support/Python/include')
 from plotting import increment
 
 class spaghetti:
-  # Internal mapping of the dataset columns
-  DATES, DISTRICT, INFECTIONS = 2, 3, 4
-  MAPPING = { '469Y' : 8, '675V' : 11, 'either' : 14 }
+  DIRECTORY = os.path.join('out', 'spaghetti')
   
   # Various private member variables for formatting
   labels, title = None, None
 
-  def __districts(self, filename):    
+  def __districts(self, filename):
       # Load relevant data, calculate the frequency and the dates
       data = pd.read_csv(filename, header=None)
-      dates = data[self.DATES].unique().tolist()
+      dates = data[DATASET_LAYOUT['dates']].unique().tolist()
       dates = [datetime.datetime(uganda.MODEL_YEAR, 1, 1) + datetime.timedelta(days=x) for x in dates]
 
-      for mutation, index in self.MAPPING.items():
-        # Status update for the user
-        print('Processing {} for {}'.format(filename, mutation))    
+      for mutation, index in DATASET_LAYOUT['mutations'].items():
+        print('Creating district plot for {}...'.format(mutation))    
 
         # Calculate the frequency based on the current mutation 
-        data['frequency'] = data[index] / data[self.INFECTIONS]
+        data['frequency'] = data[index] / data[DATASET_LAYOUT['infections']]
 
         # Load the remainder of the data
         self.labels = pd.read_csv(uganda.DISTRICTS_MAPPING)
@@ -84,7 +83,7 @@ class spaghetti:
       row, col = 0, 0
       for district in districts:
         district_id = self.labels[self.labels.Label == district].ID.values[0]
-        axes[row, col].plot(dates, replicate_data[replicate_data[self.DISTRICT] == district_id].frequency)
+        axes[row, col].plot(dates, replicate_data[replicate_data[DATASET_LAYOUT['district']] == district_id].frequency)
         axes[row, col].title.set_text(district)
         row, col = increment(row, col, COLUMNS)
           
@@ -112,7 +111,8 @@ class spaghetti:
     plt.xlabel('Model Year')
     
     # Save the plot
-    plt.savefig('out/{}'.format(filename))
+    os.makedirs(self.DIRECTORY, exist_ok=True)
+    plt.savefig(os.path.join(self.DIRECTORY, filename))
     plt.close()
     
   def __national(self, filename):
@@ -121,9 +121,8 @@ class spaghetti:
     dates = data.days.unique().tolist()
     dates = [datetime.datetime(uganda.MODEL_YEAR, 1, 1) + datetime.timedelta(days=x) for x in dates]
 
-    for mutation in self.MAPPING.keys():
-      # Status update for the user
-      print('Processing national for {}...'.format(mutation))
+    for mutation in DATASET_LAYOUT['mutations'].keys():
+      print('Creating national plot for {}...'.format(mutation))    
 
       # Calculate the frequency based on the current mutation
       data['frequency'] = data[mutation] / data.infections
@@ -154,7 +153,8 @@ class spaghetti:
       plt.plot(dates, data[data.replicate == replicate].frequency)
 
     # Save the plot
-    plt.savefig('out/{}'.format(filename))
+    os.makedirs(self.DIRECTORY, exist_ok=True)
+    plt.savefig(os.path.join(self.DIRECTORY, filename))
     plt.close()
 
 
@@ -162,6 +162,9 @@ class spaghetti:
     """Process the dataset in the file and generate three spaghetti plots.
     
     dataset - The full or relative path to the file"""
+    
     self.title = title
+    
+    print('Creating spaghetti plots for: {}'.format(filename))
     self.__districts(filename)
     self.__national(filename)

@@ -13,6 +13,15 @@ from utility import progressBar
 # Connection string for the database
 CONNECTION = 'host=masimdb.vmhost.psu.edu dbname=uganda user=sim password=sim connect_timeout=60'
 
+# The column layout of the dataset files
+DATASET_LAYOUT = {
+    'replicate'     : 1,
+    'dates'         : 2,
+    'district'      : 3,
+    'infections'    : 4,
+    'mutations'     : { '469Y' : 8, '675V' : 11, 'either' : 14 }
+}
+
 # The mapping file for the districts
 DISTRICTS_MAPPING = '../GIS/administrative/uga_districts.csv'
 

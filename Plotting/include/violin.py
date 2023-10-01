@@ -6,11 +6,14 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
+import os
 import seaborn as sb
 
 import include.uganda as uganda
 
 class violin:
+  DIRECTORY = os.path.join('out', 'violin')
+
   ENDPOINTS = {
     # Endpoint : First Date Offset, Last Date Offset, Numeric Value
     'Three' : [-96, -84, 3],
@@ -89,7 +92,8 @@ class violin:
     axis.set_xlabel('Percent Treatment Failures')
               
     # Save the plot
-    plt.savefig('out/{}'.format(filename))
+    os.makedirs(self.DIRECTORY, exist_ok=True)
+    plt.savefig(os.path.join(self.DIRECTORY, filename))
     plt.close()
   
 
@@ -141,5 +145,6 @@ class violin:
           axis.set_xlabel('ART-R alleles frequency'.format(allele))
 
     # Save the plot
-    plt.savefig('out/{}'.format(filename))
+    os.makedirs(self.DIRECTORY, exist_ok=True)
+    plt.savefig(os.path.join(self.DIRECTORY, filename))
     plt.close()
