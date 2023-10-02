@@ -21,20 +21,6 @@ class violin:
     'Ten'   : [-12, None, 10]
   }
 
-  LABELS = {
-    'status-quo'            : ['Status Quo', '#bdd7e7'],
-    'sft-al'                : ['AL', '#6baed6'],
-    'sft-asaq'              : ['ASAQ', '#6baed6'],
-    'sft-dhappq'            : ['DHA-PPQ', '#6baed6'],
-    'mft-al-25-asaq-75'     : ['AL (25%) + ASAQ (75%)', '#bae4b3'],
-    'mft-al-50-asaq-50'     : ['AL (50%) + ASAQ (50%)', '#bae4b3'],
-    'mft-al-75-asaq-25'     : ['AL (75%) + ASAQ (25%)', '#bae4b3'],
-    'mft-al-75-dhappq-25'   : ['AL (75%) + DHA-PPQ (25%)', '#74c476'],
-    'mft-asaq-75-dhappq-25' : ['ASAQ (75%) + DHA-PPQ (25%)', '#31a354'],
-    'tact-alaq'             : ['ALAQ', '#df65b0'],
-    'tact-asmqppq'          : ['ASMQ-PPQ', '#df65b0']
-  }
-
   def treatment_failures(self):
     """Generate the 3, 5, and 10 year endpoint treatment failure violin plots"""
     data, dates = uganda.load_all_datasets()
@@ -58,7 +44,7 @@ class violin:
 
     # Start by generating the data to plot
     records, labels, colors = [], [], []
-    for key, format in self.LABELS.items():
+    for key, format in uganda.LABELS.items():
       row = []
       for replicate in data[key].replicate.unique():
         # Filter on the dataset to get this replicate
@@ -119,7 +105,7 @@ class violin:
 
     # Start by generating the data to plot
     records, labels, colors = [], [], []
-    for key, format in self.LABELS.items():
+    for key, format in uganda.LABELS.items():
       data[key]['frequency'] =  data[key][allele] / data[key].infections
       row = data[key][data[key].days == date].frequency
       

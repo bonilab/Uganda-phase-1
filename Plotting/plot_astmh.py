@@ -5,7 +5,8 @@
 # Plot the calibration and violin plots for the ASTMH poster.
 import os
 
-from include.spaghetti import spaghetti 
+from include.spaghetti import spaghetti
+from include.summary import summary
 from include.median import median
 from include.violin import violin
 
@@ -31,3 +32,4 @@ if __name__ == '__main__':
   make_plots(median())
   violin().treatment_failures()
   violin().frequencies()
+  summary().generate()

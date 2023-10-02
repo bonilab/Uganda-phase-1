@@ -25,6 +25,21 @@ DATASET_LAYOUT = {
 # The mapping file for the districts
 DISTRICTS_MAPPING = '../GIS/administrative/uga_districts.csv'
 
+# The following are the labels and colors for the various configurations
+LABELS = {
+    'status-quo'            : ['Status Quo', '#bdd7e7'],
+    'sft-al'                : ['AL', '#6baed6'],
+    'sft-asaq'              : ['ASAQ', '#6baed6'],
+    'sft-dhappq'            : ['DHA-PPQ', '#6baed6'],
+    'mft-al-25-asaq-75'     : ['AL (25%) + ASAQ (75%)', '#bae4b3'],
+    'mft-al-50-asaq-50'     : ['AL (50%) + ASAQ (50%)', '#bae4b3'],
+    'mft-al-75-asaq-25'     : ['AL (75%) + ASAQ (25%)', '#bae4b3'],
+    'mft-al-75-dhappq-25'   : ['AL (75%) + DHA-PPQ (25%)', '#74c476'],
+    'mft-asaq-75-dhappq-25' : ['ASAQ (75%) + DHA-PPQ (25%)', '#31a354'],
+    'tact-alaq'             : ['ALAQ', '#df65b0'],
+    'tact-asmqppq'          : ['ASMQ-PPQ', '#df65b0']
+}
+
 # First year of model execution
 MODEL_YEAR = 2004
 
