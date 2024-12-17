@@ -1,0 +1,46 @@
+---
+site: "bookdown::bookdown_site"
+bibliography: "tex/bibliography.bib"
+output:
+  bookdown::pdf_document2:
+    includes:
+      in_header: "tex/parahdr.tex"
+    toc: false
+header-includes:
+  - \pagenumbering{gobble}
+  - \usepackage{pdflscape}
+  - \newcommand{\blandscape}{\begin{landscape}}
+  - \newcommand{\elandscape}{\end{landscape}}
+---
+
+<!-- Read the version number in so we can include it in the title -->
+```{r, echo = FALSE}
+library(stringr)
+version <- paste(readLines("../src/version.h", warn = FALSE), collapse = " ")
+version <- str_match(version, '"(.*)"')[1, 2]
+```
+
+---
+title: |
+    | \vspace{2in}Malaria Simulation (MaSim)
+    | Version: `r version`
+author: "Robert Zupko"
+---
+
+<!-- Edition notice -->
+```{=latex}
+\newpage
+$\\[7.5in]$
+```
+Compilation date `r Sys.Date()` for version `r version`
+
+Copyright 2023 - `r format(Sys.Date(), "%Y")`, Robert Zupko
+
+This document was produced in part through funding from the National Institutes of Health (NIAID R01AI153355), and the Bill and Melinda Gates Foundation (OPP159934, INV-005517).
+
+<!-- Table of Contents -->
+```{=latex}
+\newpage
+\pagenumbering{roman}
+\tableofcontents
+```

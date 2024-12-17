@@ -1,0 +1,6 @@
+\newpage
+\pagenumbering{arabic}
+
+# (PART\*) Introduction {-}
+
+Malaria is a vector-borne infectious disease that is transmitted by a bite from an infected *Anopheles* mosquito, and is caused by unicellular eukaryote members of the *Plasmodium* genus, which are obligate parasites, requiring a suitable host as part of their life cycle. In humans, *P. falciparum* is the leading cause of malaria deaths, while *P. vivax*, *P. ovale*, and *P. malariae* cause milder infections; less frequent are infections by *P. knowlesi*. Due to the potential severity of cases, emphasis is placed on falciparum malaria and it's eradication; however, eradication is complicated by the tendency of the parasite to develop drug resistance with artemisinin partial resistance now having being identified in several parts of Africa [@world_health_organization_world_2022]. 

@@ -1,0 +1,161 @@
+\newpage
+
+# (PART\*) Development {-}
+
+# Development
+
+This chapter outlines the basic steps that are needed to build the simulation across various development environments. The guide is written from the standpoint of a "clean" workstation with no other dependencies in place for users intended to work with the simulation's codebase. Typically the best place to start is by running the `config.sh` script in the root of the repository, which prepares the development environment on Linux and Windows Subsystem for Linux (WSL) systems, followed by creation of a database administrator if needed. However, if the script doesn't work, the full workflow for installing the tool chain dependencies is included here.
+
+## Tool Chain Dependencies
+
+### Windows Subsystem for Linux / Linux
+
+Starting with either the Windows Subsystem for Linux of your choice (Ubuntu recommended, or Red Hat) on a a Linux system:
+
+Step 1. Ensure that `apt` is up to date.
+
+```bash
+sudo apt update
+sudo apt upgrade
+```
+
+Step 2. Install the build dependencies
+```bash
+sudo apt install build-essential
+sudo apt install cmake
+sudo apt install libgsl-dev
+sudo apt install libyaml-cpp-dev
+sudo apt install libfmt-dev
+```
+
+Step 3. Add PostgreSQL to the Apt Repository listing
+
+Note that while this step is necessary when working from a new installation of Ubuntu, it may not be necessary, and you should check to see if the package can be found by first performing `apt search postgresql-10`
+
+```bash
+sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release \
+  -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+sudo apt-get update
+```
+
+Step 4. Install the PostgreSQL and libpqxx dependencies
+
+Note that this should be done from a directory that you are comfortable with git repositories being stored in.
+
+```bash
+sudo apt install postgresql-10
+sudo apt install libpq-dev
+git clone https://github.com/jtv/libpqxx.git
+cd libpqxx
+git checkout 7.8.1
+./configure --disable-documentation
+make
+sudo make install
+```
+
+Step 5. Create PostgreSQL administrative user
+
+If you are going to be using the PostgreSQL database locally for development purposes, then it is recommended that you also create an administrative user and install pgAdmin (see [Installation of pgAdmin](#Installation of pgAdmin)).
+
+```bash
+sudo -u postgres createuser --interactive --pwprompt
+```
+
+Step 6. Install Git Large File Storage
+
+While not necessary for building the simulation, when working with country data or archiving projects it is recommended that Git Large File Storage (LFS) is installed as follows:
+
+```bash
+sudo apt install git-lfs
+git lfs install
+```
+
+### Upgrading to WSL 2
+
+WSL 2 offers some [performance improvements](https://docs.microsoft.com/en-us/windows/wsl/compare-versions) which may be relevant during development so upgrading may be of interest. To do so the following needs to be performed, note that these steps will also enable WSL 2 if WSL 1 has not already been installed. However, one drawback of WSL 2 is that disk access may be slow compared to WSL 1, so this upgrade should only be done if necessary.
+
+Open `PowerShell` with administrator permissions and enter the following:
+
+```PowerShell
+dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all `
+  /norestart
+dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+```
+
+Once complete, restart the computer, after which the version needs to be set in `PowerShell`:
+
+```PowerShell
+wsl --set-default-version 2
+```
+
+If you have already installed a distribution, updating is recommended. Otherwise, you can now install a WSL compliant distribution.
+
+## Building
+
+### Local WSL Builds
+
+Before building the first time it is necessary to create the build directory within the local clone of the `PSU-CIDD-Malaria-Simulation` repository:
+
+```bash
+mkdir build
+cd build
+```
+
+After which the following command can be run to build the simulation under WSL:
+
+```bash
+cmake -DCMAKE_BUILD_TYPE=DEBUG -DBUILD_WSL:BOOL=true ..
+make -j 8
+```
+
+Generally it is recommended to create a `build.sh` script that runs the build commands.
+
+## Execution
+
+### Local Runs
+The first step in performing a basic model check is load the genome data in the database, this must also be done whenever a new database is corrected:
+
+```base
+cd build/bin
+./MaSim -i ../../misc/input.yml -l
+```
+
+Once the genome data has been loaded the basic input file can be run as follows:
+
+```bash
+cd build/bin
+./MaSim -i ../../misc/input.yml
+```
+
+Note that while care was taken in places to ensure the code is performant, the amount of RAM needed during execution can be quite high (ex., 32 GB or more). When the model is run in Linux environments where the necessary memory is not available, you may find that the program is killed without notice due to being [out of memory](https://linux-mm.org/OOM_Killer).
+
+## Development Tools
+
+### Isolating Segmentation Faults in Linux
+When developing new functionality in the model it is sometimes necessary to isolate segmentation faults. One of the easier ways to do this is through the use of `gdb` in a Linux environment. First, compile the program with the `debug` flag set, this will ensure that there are debug symbols in the binary. Then use `gdb` to open the gdb console:
+
+```bash
+file bin/MaSim              # Load the specified executable
+run -i ../input/sample.yml  # Run the program with the following command line parameters
+
+...                         # Program output omitted
+
+bt                          # Generates the stack trace
+```
+
+### Profiling
+While there are many approaches to code profiling, as a quick way to get up and running, [valgrind](http://www.valgrind.org/) is recommended along with [gprof2dot](https://github.com/jrfonseca/gprof2dot). Following installation, the simulation can be profiled using:
+
+```bash
+valgrind --tool=callgrind ./bin/MaSim - ../input/sample.yml
+gprof2dot -f callgrind callgrind.out.* | dot -Tpng -o output.png
+```
+
+This will generate a PNG file containing a node graph of where most of the simulation's time is spent during execution along with the percentage of time spent in a given function. 
+
+Note that `valgrind` adds **considerable** overhead to the execution of the simulation, so it is highly recommended that profiling be limited to small simulations. 
+
+### Valgrind under WSL 2 with CLion integration
+
+When using CLion as an IDE, integration with Valgrind is possible. Presuming that WSL 2 has been enabled and `valgrind` has been installed, CLion simply needs to be informed of the path under WLS 2 via **File > Settings > Build, Execution, Deployment > Valgrind** and the path will typically be `/usr/bin/valgrind`. 

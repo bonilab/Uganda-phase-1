@@ -1,0 +1,38 @@
+# Configuration options
+book_filename: "manual.Rmd"
+delete_merged_file: true
+output_dir: "."
+
+# Set the order of the chapters
+rmd_files: [
+  # Configuration
+  "index.Rmd", 
+  
+  # Introduction
+  "chapters/01_introduction.Rmd",
+  "chapters/02_description.Rmd",
+
+  # Data Preparation
+  "chapters/03_gis.Rmd",
+
+  # Simulation
+  "chapters/04_calibration.Rmd",
+  "chapters/05_execution.Rmd",
+  "chapters/06_demonstration.Rmd",
+  "chapters/07_DxGGenerator.Rmd",
+
+  # Development
+  "chapters/08_development.Rmd",
+  "chapters/09_database.Rmd",
+  "chapters/10_technicalities.Rmd",
+  "chapters/11_reporters.Rmd",
+  "chapters/12_configuration.Rmd",
+  
+  # Appendices
+  "appendices/data_sources.Rmd",
+  "appendices/encoding.Rmd",
+  "appendices/psu.Rmd",
+  
+  # References
+  "references.Rmd"
+  ]

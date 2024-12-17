@@ -1,0 +1,36 @@
+# clangd cache
+.cache*
+
+# Ignore IDE directories
+.idea
+.vscode
+.vs
+.DS_Store
+
+# Ignore R artifacts
+.RData
+.Rhistory
+.Rproj.user
+_book
+
+# Ignore build artifacts
+build*
+bin
+node_modules
+Testing
+cmake-*
+compile_commands.json
+
+# Ignore the backups of diagrams
+documentation/diagrams/*.~vsdx
+
+# Ignore default output and data files
+out
+monthly_data\.txt
+reporter\.txt
+
+# Ignore temporary Excel files
+~$*.xlsx
+
+# Ignore log files
+*.log
