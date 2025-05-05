@@ -17,10 +17,9 @@ This repository is organized as follows:
 - `Validation/`: Includes configuration files used for initial model calibration, validation against known Ugandan epidemiological data (e.g., malaria prevalence rates from surveys like the Uganda Malaria Indicator Survey), and specific simulations exploring _de novo_ mutation events related to drug resistance.
 - `Results/`: Contains configuration files for the main analysis scenarios simulating different intervention strategies in Uganda, as presented in the associated publication.
   - **Note:** Due to their large size, the raw output data files (e.g., SQLite databases) generated from these simulations are **not** stored directly in this directory. They can be downloaded from the **[Releases](https://github.com/bonilab/Uganda-phase-1)** section of this GitHub repository.
-- `Source/`: A mirror of the specific version of the `Temple-Malaria-Simulation` source code (which evolved from work initiated under the PSU-CIDD umbrella) used for these analyses. This is included for reproducibility, ensuring the exact modeling framework version is accessible.
+- `Source/`: A mirror of the specific version of the `Temple-Malaria-Simulation` source code used for these analyses. This is included for reproducibility, ensuring the exact modeling framework version is accessible.
   - **Origin:** [bonilab/Temple-Malaria-Simulation GitHub](https://github.com/bonilab/Temple-Malaria-Simulation/)
   - **Branch Used:** `4.x.main`
-  - **Specific Commit (Recommended):** `[Add Specific Commit Hash if known, e.g., a1b2c3d4]`
 
 ## Prerequisites
 
