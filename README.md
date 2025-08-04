@@ -82,6 +82,8 @@ make
 
 Replace `/path/to/vcpkg/` with your local vcpkg path.
 
+**Note:** The compile time should take less than 5 minutes on a modern machine.
+
 ---
 
 ## Getting Started
@@ -117,7 +119,7 @@ Replace `/path/to/vcpkg/` with your local vcpkg path.
 
 ## Sample Scenarios and Reproducibility
 
-The repository includes a `Sample_Datasets/` folder with a minimal example `Status Quo` scenarios that can be used to verify your installation and understand the model structure:
+The repository includes a `Sample_Datasets/` folder with a minimal example `Status Quo` scenarios that can be used to verify your installation and understand the model structure. For other senarios, refer to the `Analysis/inputs` directory.
 
 - `000_status_quo`
 
@@ -136,7 +138,9 @@ cd Sample_Datasets/000_status_quo/raw
 ../bin/MaSim -i ../input/input.yml -r SQLiteDistrictReporter -j 5
 ```
 
-This will generate `monthly_data_5` in the same directory, which can be opened with any SQLite viewer or can be processed using Python.
+This will generate `monthly_data_5.db` in the same directory, which can be opened with any SQLite viewer or can be processed using Python.
+
+The simulation will run for approximately 48 hours, depending on your system's performance and requires 40 GB of RAM.
 
 ---
 
