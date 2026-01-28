@@ -1,4 +1,4 @@
-.Ds_Store
+.DS_Store
 # Exclude IDE files
 .vscode
 *.asv
@@ -15,6 +15,5 @@ GIS/reference/uga_population.asc
 
 # Exclude working directories
 **/cache/**
-**/data/**
 **/plots/**
 **/out/**
