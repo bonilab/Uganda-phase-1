@@ -41,7 +41,6 @@ This repository is organized as follows:
 - `Analysis/`: Contains Python scripts and Jupyter Notebooks used for post-simulation analysis, including processed data, visualization, and statistical analysis of simulation outcomes.
 
 - `Results/`: Contains configuration files for the main analysis scenarios simulating different intervention strategies in Uganda, as presented in the associated publication.
-
   - **Note:** Due to their large size, the raw output data files (e.g., SQLite databases) generated from these simulations are **not** stored directly in this directory. They can be downloaded from the **[Releases](https://github.com/bonilab/Uganda-phase-1/releases/tag/v1.0_250505)** section of this GitHub repository.
 
 - `Source/`: A mirror of the specific version of the `Temple-Malaria-Simulation` source code used for these analyses. This is included for reproducibility, ensuring the exact modeling framework version is accessible.
@@ -142,6 +141,8 @@ This will generate `monthly_data_5.db` in the same directory, which can be opene
 
 The simulation will run for approximately 48 hours, depending on your system's performance and requires 40 GB of RAM.
 
+If you want to run a smaller, faster test simulation, open `input/input.yml` and go to line 62, where the population rescaling factor (`artificial_rescaling_of_population_size`) is defined. You can reduce this value (e.g. to 0.05 or 0.01) to substantially decrease runtime and memory usage for testing and exploration.
+
 ---
 
 ## Simulation Execution Context
@@ -151,7 +152,6 @@ The simulation will run for approximately 48 hours, depending on your system's p
 - **Main Analysis Scenarios:** Executed on the Temple University High Performance Computing Cluster ([TU HPC](https://www.hpc.temple.edu/)) using files in the `Results/` directory.
 
 - **Runtime & Memory:** For a simulation of 25% of Uganda’s population (\~12.5 million individuals), the model requires approximately:
-
   - **40 GB of RAM**
   - **48 hours** wall-clock time
   - **50 MB** of output in a SQLite `.db` file
