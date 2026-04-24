@@ -38,7 +38,9 @@ This repository is organized as follows:
 
 - `Validation/`: Includes configuration files used for initial model calibration, validation against known Ugandan epidemiological data (e.g., malaria prevalence rates from surveys like the Uganda Malaria Indicator Survey), and specific simulations exploring _de novo_ mutation events related to drug resistance.
 
-- `Analysis/`: Contains Python scripts and Jupyter Notebooks used for post-simulation analysis, including processed data, visualization, and statistical analysis of simulation outcomes.
+- `Final Figures Main Text/`: Contains Python scripts and Jupyter Notebooks used to generate the main-text figures, including processed data, visualizations, and statistical analyses of simulation outcomes.
+
+- `Final Figures Main Text – Accessible Color Palette/`: Contains final figure outputs only, generated using a colorblind-safe (accessible) palette.
 
 - `Results/`: Contains configuration files for the main analysis scenarios simulating different intervention strategies in Uganda, as presented in the associated publication.
   - **Note:** Due to their large size, the raw output data files (e.g., SQLite databases) generated from these simulations are **not** stored directly in this directory. They can be downloaded from the **[Releases](https://github.com/bonilab/Uganda-phase-1/releases/tag/v1.0_250505)** section of this GitHub repository.
